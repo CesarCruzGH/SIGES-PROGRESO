@@ -13,6 +13,7 @@ class Patient extends Model
         'medical_record_number',
         'full_name',
         'date_of_birth',
+        'age',
         'sex',
         'patient_type',
         'service',

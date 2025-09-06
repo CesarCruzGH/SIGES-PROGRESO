@@ -11,6 +11,8 @@ class EditPatient extends EditRecord
 {
     protected static string $resource = PatientResource::class;
 
+    protected static ?string $maxWidth = 'full';
+
     protected function getHeaderActions(): array
     {
         return [

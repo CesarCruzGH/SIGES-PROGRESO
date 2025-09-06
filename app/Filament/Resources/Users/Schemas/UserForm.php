@@ -23,7 +23,7 @@ class UserForm
                     TextInput::make('password')->label('Contraseña')->password()->required(),
                 ])
                 ->columns(1),
-            ComponentsFieldset::make('Funciones')
+                ComponentsFieldset::make('Funciones')
                 ->schema([
                     Select::make('role')
                         ->label('Función')
