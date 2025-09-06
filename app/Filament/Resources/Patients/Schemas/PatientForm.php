@@ -15,6 +15,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use League\CommonMark\Extension\Table\TableSection;
+use Filament\Forms\Components\Toggle;
 // Ya no necesitas: use Filament\Forms\Set;
 
 class PatientForm
@@ -28,6 +29,10 @@ class PatientForm
                     ->columns(2)
                     ->columnSpanFull()
                     ->schema([  
+                        Toggle::make('has_insurance')
+                            ->label('¿Tiene seguro médico?')
+                            ->live() // Esencial para que el formulario reaccione a sus cambios.
+                            ->default(false),
                         TextInput::make('insurance_provider')
                             ->label('Aseguradora')
                             ->hidden(fn ($get): bool =>!$get('has_insurance')) // Oculto si 'has_insurance' es falso.
@@ -36,7 +41,8 @@ class PatientForm
                         TextInput::make('policy_number')
                             ->label('Número de Póliza')
                             ->hidden(fn ($get): bool =>!$get('has_insurance'))
-                            ->required(fn ($get): bool => $get('has_insurance')),                    
+                            ->required(fn ($get): bool => $get('has_insurance')),     
+
                         TextInput::make('full_name')
                             ->label('Nombre Completo')
                             ->required()
