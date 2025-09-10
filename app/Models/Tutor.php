@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Tutor extends Model
 {
     protected $fillable = [
-        'patient_id',
         'full_name',
         'relationship',
         'phone_number',
@@ -16,8 +15,8 @@ class Tutor extends Model
     ];
 
     // Relaciones
-    public function patient(): BelongsTo
+    public function patient()
     {
-        return $this->belongsTo(Patient::class);
+        return $this->hasMany(Patient::class);
     }
 }
