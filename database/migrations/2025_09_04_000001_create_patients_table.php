@@ -6,22 +6,28 @@ use Illuminate\Support\Facades\Schema;
 
 class CreatePatientsTable extends Migration
 {
-    public function up()
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
     {
+        // Usamos Schema::create para CONSTRUIR la tabla desde cero.
         Schema::create('patients', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('medical_record_number', 20)->unique();
             $table->string('full_name', 255);
             $table->date('date_of_birth');
-            $table->integer('age');
             $table->string('sex', 50);
             $table->string('patient_type', 100);
-            $table->string('service', 150);
+            // Las columnas 'age' y 'service' ya no se crean aquí.
             $table->timestamps();
         });
     }
 
-    public function down()
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
     {
         Schema::dropIfExists('patients');
     }

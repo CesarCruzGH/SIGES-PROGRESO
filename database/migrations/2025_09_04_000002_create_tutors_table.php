@@ -10,7 +10,6 @@ class CreateTutorsTable extends Migration
     {
         Schema::create('tutors', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->foreignId('patient_id')->unique()->constrained('patients')->onDelete('cascade');
             $table->string('full_name', 255);
             $table->string('relationship', 100);
             $table->string('phone_number', 20)->nullable();
