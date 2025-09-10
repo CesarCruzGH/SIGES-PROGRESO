@@ -7,6 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo; // Cambiado
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
 
+//enums
+use App\Enums\PatientType;
+use App\Enums\EmployeeStatus;
+use App\Enums\Shift;
+use App\Enums\VisitType;
+
 class Patient extends Model
 {
     protected $fillable = [
@@ -31,6 +37,10 @@ class Patient extends Model
     protected $casts = [
         'date_of_birth' => 'date',
         'has_disability' => 'boolean', // Añadido
+        'patient_type' => PatientType::class, // Añadido
+        'employee_status' => EmployeeStatus::class, // Añadido
+        'shift' => Shift::class, // Añadido
+        'visit_type' => VisitType::class, // Añadido
     ];
 
     // Este accesor ahora es la única fuente de verdad para la edad. ¡Perfecto!
