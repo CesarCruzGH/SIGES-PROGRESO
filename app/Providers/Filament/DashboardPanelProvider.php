@@ -29,7 +29,8 @@ class DashboardPanelProvider extends PanelProvider
             ->path('dashboard')
             ->login()
             ->colors([
-                'primary' => Color::Purple,
+                'primary' => Color::hex('#f4b857'),
+                'icon' => Color::hex('#92d4ee'),
             
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
