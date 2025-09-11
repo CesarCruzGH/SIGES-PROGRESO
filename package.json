@@ -6,6 +6,7 @@
         "dev": "vite"
     },
     "devDependencies": {
+        "@alpinejs/mask": "^3.15.0",
         "autoprefixer": "^10.4.20",
         "axios": "^1.7.4",
         "concurrently": "^9.0.1",
