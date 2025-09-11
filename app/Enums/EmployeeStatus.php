@@ -4,11 +4,17 @@ namespace App\Enums;
 
 enum EmployeeStatus: string
 {
-    case UNIONIZED = 'sindicalizado';
-    case TRUSTED = 'confianza';
-    // AÑADIR ESTE MÉTODO
+    case SINDICALIZADO = 'sindicalizado';
+    case CONFIANZA = 'confianza';
+
     public static function getOptions(): array
     {
-        return array_column(self::cases(), 'value', 'name');
+        $options = [];
+        foreach (self::cases() as $case) {
+            // La clave es el valor que se guarda (ej: 'sindicalizado')
+            // El valor es una etiqueta amigable para el usuario (ej: 'Sindicalizado')
+            $options[$case->value] = ucfirst(str_replace('_', ' ', strtolower($case->name)));
+        }
+        return $options;
     }
 }

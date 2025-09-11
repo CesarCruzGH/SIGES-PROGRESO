@@ -13,6 +13,8 @@ use App\Enums\EmployeeStatus;
 use App\Enums\Shift;
 use App\Enums\VisitType;
 
+use Illuminate\Support\Facades\DB; // <-- ¡Añade esta línea!
+
 class Patient extends Model
 {
     protected $fillable = [
@@ -42,7 +44,21 @@ class Patient extends Model
         'shift' => Shift::class, // Añadido
         'visit_type' => VisitType::class, // Añadido
     ];
+    protected static function booted(): void
+    {
+        static::creating(function (Patient $patient) {
+            // 1. Pide a PostgreSQL el siguiente valor de la secuencia.
+            $nextValResult = DB::select("select nextval('medical_record_number_seq')");
+            $nextVal = $nextValResult[0]->nextval;
 
+            // 2. (Opcional pero recomendado) Formatea el número con ceros a la izquierda.
+            //    Por ejemplo, el número 12 se convertirá en "EXP-000012".
+            $formattedNumber = 'EXP-' . str_pad($nextVal, 6, '0', STR_PAD_LEFT);
+
+            // 3. Asigna el número formateado al campo del modelo antes de guardarlo.
+            $patient->medical_record_number = $formattedNumber;
+        });
+    }
     // Este accesor ahora es la única fuente de verdad para la edad. ¡Perfecto!
     public function getAgeAttribute(): ?int
     {

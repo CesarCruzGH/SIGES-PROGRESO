@@ -31,9 +31,11 @@ class PatientForm
                     ->schema([
                         TextInput::make('medical_record_number')
                             ->label('Número de Expediente')
-                            ->required()
                             ->maxLength(20)
-                            ->unique(ignoreRecord: true),
+                            ->unique(ignoreRecord: true)
+                            ->disabled()
+                            ->dehydrated()
+                            ->placeholder('Se generará automáticamente al guardar'),
                         TextInput::make('full_name')
                             ->label('Nombre Completo')
                             ->required()

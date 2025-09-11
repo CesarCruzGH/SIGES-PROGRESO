@@ -4,13 +4,20 @@ namespace App\Enums;
 
 enum Shift: string
 {
-    case MORNING = 'matutino';
-    case EVENING = 'vespertino';
-    case NIGHT = 'nocturno';
-    case WEEKEND = 'fin_de_semana';
-    // AÑADIR ESTE MÉTODO
+    case MATUTINO = 'matutino';
+    case VESPERTINO = 'vespertino';
+    case NOCTURNO = 'nocturno';
+    case FIN_DE_SEMANA = 'fin_de_semana';
+
+    // MÉTODO CORREGIDO
     public static function getOptions(): array
     {
-        return array_column(self::cases(), 'value', 'name');
+        $options = [];
+        foreach (self::cases() as $case) {
+            // La clave es el valor que se guarda (ej: 'matutino')
+            // El valor es una etiqueta amigable para el usuario (ej: 'Matutino')
+            $options[$case->value] = ucfirst(str_replace('_', ' ', strtolower($case->name)));
+        }
+        return $options;
     }
 }
