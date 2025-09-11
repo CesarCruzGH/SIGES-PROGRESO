@@ -3,206 +3,117 @@
 namespace App\Filament\Resources\Patients\Schemas;
 
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
-use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Get;
-use Filament\Schemas\Components\Fieldset as ComponentsFieldset;
-use Illuminate\Support\Carbon;
-use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
-use League\CommonMark\Extension\Table\TableSection;
 use Filament\Forms\Components\Toggle;
-use Filament\Actions\Action;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Get;
+use Filament\Schemas\Schema; // CORREGIDO: Usar Form en lugar de Schema
+use Illuminate\Database\Eloquent\Builder;
+use Filament\Schemas\Components\Section;
+
+// --- Importar todos los Enums ---
+use App\Enums\PatientType;
+use App\Enums\EmployeeStatus;
+use App\Enums\Shift;
+use App\Enums\VisitType;
+use Filament\Tables\Table;
+
 class PatientForm
 {
+    // CORREGIDO: El método se llama "schema" y recibe un objeto Form
     public static function configure(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Section::make('Información personal')
-                    ->description('Detalles básicos del paciente')
+                Section::make('Información Personal')
                     ->columns(2)
-                    ->columnSpanFull()
-                    ->schema([  
-                        Section::make('Medico asignado')
-                        ->schema([
-                            TextInput::make('assigned_doctor_name')
-                                            ->label('Médico Asignado')
-                                            ->placeholder('Haga clic en el botón para seleccionar...')
-                                            ->readOnly() // El usuario no puede escribir aquí.
-                                            ->columnSpanFull()
-                                            // 2. El botón que abre el modal.
-                                            ->suffixAction(
-                                                Action::make('selectDoctor')
-                                                    ->icon('heroicon-m-magnifying-glass')
-                                                    ->label('Elegir')
-                                                    ->modalHeading('Selecciona un Médico')
-                                                    ->modalSubmitActionLabel('Confirmar Selección')
-                                                    ->modalCancelActionLabel('Cancelar')
-                                                    
-                                                    // 3. El contenido del modal se define aquí.
-                                                    ->form([
-                                                        Select::make('doctor_id')
-                                                            ->label('Médicos Disponibles')
-                                                            ->searchable() // ¡Permite buscar en la lista!
-                                                            ->required()
-                                                            // 4. Tu lista estática de opciones.
-                                                            ->options([
-                                                                'dr_garcia' => 'Dr. Alejandro García (Cardiólogo)',
-                                                                'dra_lopez' => 'Dra. Isabel López (Pediatra)',
-                                                                'dr_sanchez' => 'Dr. Carlos Sánchez (Neurólogo)',
-                                                                'dra_martinez' => 'Dra. Laura Martínez (Dermatóloga)',
-                                                            ])
-                                                            ->helperText('Puedes escribir para filtrar la lista.'),
-                                                    ])
-                                                    
-                                                    // 5. La acción que se ejecuta al confirmar.
-                                                    ->action(function (array $data, $set) {
-                                                        // $data contiene los valores del formulario del modal
-                                                        // Ejemplo: ['doctor_id' => 'dra_lopez']
-
-                                                        $doctores = [
-                                                            'dr_garcia' => 'Dr. Alejandro García (Cardiólogo)',
-                                                            'dra_lopez' => 'Dra. Isabel López (Pediatra)',
-                                                            'dr_sanchez' => 'Dr. Carlos Sánchez (Neurólogo)',
-                                                            'dra_martinez' => 'Dra. Laura Martínez (Dermatóloga)',
-                                                        ];
-                                                        
-                                                        $nombreSeleccionado = $doctores[$data['doctor_id']];
-
-                                                        // Usamos $set para actualizar el campo de texto principal.
-                                                        $set('assigned_doctor_name', $nombreSeleccionado);
-                                                    })
-                                            ),
-                                        ]),
-                        Toggle::make('has_insurance')
-                            ->label('¿Tiene seguro médico?')
-                            ->live() // Esencial para que el formulario reaccione a sus cambios.
-                            ->default(false),
-                        TextInput::make('insurance_provider')
-                            ->label('Aseguradora')
-                            ->hidden(fn ($get): bool =>!$get('has_insurance')) // Oculto si 'has_insurance' es falso.
-                            ->required(fn ($get): bool => $get('has_insurance')), // Requerido si 'has_insurance' es verdadero.
-
-                        TextInput::make('policy_number')
-                            ->label('Número de Póliza')
-                            ->hidden(fn ($get): bool =>!$get('has_insurance'))
-                            ->required(fn ($get): bool => $get('has_insurance')),     
-
+                    ->schema([
+                        TextInput::make('medical_record_number')
+                            ->label('Número de Expediente')
+                            ->required()
+                            ->maxLength(20)
+                            ->unique(ignoreRecord: true),
                         TextInput::make('full_name')
                             ->label('Nombre Completo')
                             ->required()
-                            ->minLength(5)
-                            ->validationMessages([
-                                'required' => 'El nombre completo del paciente es obligatorio.',
-                                'minLength' => 'El nombre completo debe tener al menos 5 caracteres.',
-                            ]),
-
+                            ->maxLength(255),
                         DatePicker::make('date_of_birth')
                             ->label('Fecha de Nacimiento')
                             ->required()
-                            ->native(false)
-                            ->displayFormat('d/m/Y')
-                            ->maxDate(now())
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(function (callable $set, ?string $state) {
-                                $set('age', $state ? Carbon::parse($state)->age : null);
-                            }),
-
-                        TextInput::make('age')
-                            ->label('Edad')
-                            ->numeric()
-                            ->readOnly()
-                            ->placeholder('Se calculará automáticamente'),
-
-                        Radio::make('gender')
-                            ->label('Género')
-                            ->options([
-                                'Masculino' => 'Masculino',
-                                'Femenino' => 'Femenino',
-                                'Otro' => 'Otro',
-                            ])
-                            ->required()
-                            ->inline(),
-                        
+                            ->native(false),
+                        TextInput::make('curp')
+                            ->label('CURP')
+                            ->maxLength(18)
+                            ->unique(ignoreRecord: true),
+                        Select::make('sex')
+                            ->label('Sexo')
+                            ->options(['Masculino' => 'Masculino', 'Femenino' => 'Femenino'])
+                            ->required(),
+                        TextInput::make('locality') // AÑADIDO
+                            ->label('Localidad'),
                     ]),
-                Tabs::make('Información Personal')                  
-                    ->columnSpanFull()
-                    ->persistTabInQueryString()                    
-                    ->tabs([
-                        Tabs\Tab::make('Detalles básicos del paciente')
-                            ->icon('heroicon-s-user-plus')
-                            ->schema([
-                                TextInput::make('full_name')
-                            ->label('Nombre Completo')
-                            ->required()
-                            ->minLength(5)
-                            ->validationMessages([
-                                'required' => 'El nombre completo del paciente es obligatorio.',
-                                'minLength' => 'El nombre completo debe tener al menos 5 caracteres.',
-                            ]),
 
-                        DatePicker::make('date_of_birth')
-                            ->label('Fecha de Nacimiento')
+                Section::make('Clasificación del Paciente')
+                    ->columns(2)
+                    ->schema([
+                        Select::make('patient_type')
+                            ->label('Tipo de Paciente')
+                            ->options(PatientType::getOptions()) // CORREGIDO: Usando nuestro nuevo método
                             ->required()
-                            ->native(false)
-                            ->displayFormat('d/m/Y')
-                            ->maxDate(now())
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(function (callable $set, ?string $state) {
-                                $set('age', $state ? Carbon::parse($state)->age : null);
-                            }),
-
-                        TextInput::make('age')
-                            ->label('Edad')
-                            ->numeric()
-                            ->readOnly()
-                            ->placeholder('Se calculará automáticamente'),
-
-                        Radio::make('gender')
-                            ->label('Género')
-                            ->options([
-                                'Masculino' => 'Masculino',
-                                'Femenino' => 'Femenino',
-                                'Otro' => 'Otro',
-                            ])
-                            ->required()
-                            ->inline(),
-                            ]),
-                        Tabs\Tab::make('Seguro y Facturación')
-                            ->schema([
-                        TextInput::make('phone')
-                            ->label('Teléfono')
-                            ->tel()
-                            ->required()
-                            ->validationMessages([
-                                'required' => 'El número de teléfono es obligatorio.',
-                                'tel' => 'Por favor, introduce un número de teléfono válido.',
-                            ]),
-
-                        TextInput::make('email')
-                            ->label('Correo Electrónico')
-                            ->email()
-                            ->required()
-                            ->validationMessages([
-                                'required' => 'El correo electrónico es obligatorio.',
-                                'email' => 'Por favor, introduce una dirección de correo electrónico válida.',
-                            ]),
-
-                        TextInput::make('address')
-                            ->label('Dirección')
-                            ->required()
-                            ->minLength(10)
-                            ->validationMessages([
-                                'required' => 'La dirección es obligatoria.',
-                                'minLength' => 'La dirección debe tener al menos 10 caracteres.',
-                            ]),
+                            ->live(),
+                        Select::make('employee_status')
+                            ->label('Estatus (si es empleado)')
+                            ->options(EmployeeStatus::getOptions()) // CORREGIDO: Usando nuestro nuevo método
+                            // CORREGIDO: La comparación debe ser con el objeto Enum
+                            ->visible(fn ($get) => $get('patient_type') === PatientType::EMPLOYEE->value),
                     ]),
-                ]),
+
+                Section::make('Tutor (para menores de edad)')
+                    ->schema([
+                        Toggle::make('is_pediatric')
+                            ->label('¿Es paciente pediátrico?')
+                            ->helperText('Activa esta opción si el paciente es menor de edad.')
+                            ->live(),
+                        Select::make('tutor_id')
+                            ->label('Asignar Tutor')
+                            ->relationship('tutor', 'full_name')
+                            ->searchable()
+                            ->preload()
+                            ->createOptionForm([
+                                TextInput::make('full_name')->label('Nombre Completo')->required(),
+                                TextInput::make('relationship')->label('Parentesco')->required(),
+                                TextInput::make('phone_number')->label('Teléfono'),
+                                Textarea::make('address')->label('Dirección')->columnSpanFull(),
+                            ])
+                            ->visible(fn ($get) => $get('is_pediatric')),
+                    ]),
+
+                Section::make('Detalles Médicos y Administrativos') // AÑADIDO
+                    ->columns(2)
+                    ->schema([
+                        Select::make('attending_doctor_id')
+                            ->label('Médico que Atiende')
+                            ->relationship('attendingDoctor', 'name', modifyQueryUsing: fn (Builder $query) => $query->where('role', 'doctor'))
+                            ->searchable()
+                            ->preload(),
+                        Select::make('shift')
+                            ->label('Turno')
+                            ->options(Shift::getOptions()), // CORREGIDO
+                        Select::make('visit_type')
+                            ->label('Tipo de Visita')
+                            ->options(VisitType::getOptions()), // CORREGIDO
+                        Toggle::make('has_disability')
+                            ->label('¿Tiene alguna discapacidad?')
+                            ->live(),
+                        Textarea::make('disability_details')
+                            ->label('Detalles de la Discapacidad')
+                            ->columnSpanFull()
+                            ->visible(fn ($get) => $get('has_disability')),
+                    ]),
+
             ]);
     }
+
+
 }
