@@ -84,5 +84,7 @@ class Patient extends Model
     public function somatometricReadings(): HasMany
     {
         return $this->hasMany(SomatometricReading::class);
+        return $this->hasMany(SomatometricReading::class)->with('user')->latest();
+
     }
 }

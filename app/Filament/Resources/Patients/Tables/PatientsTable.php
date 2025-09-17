@@ -39,8 +39,10 @@ class PatientsTable
                 //
             ])
             ->recordActions([
-                ViewAction::make(),
-                EditAction::make(),
+                ViewAction::make()
+                    ->label('Ver Detalles') // Opcional: cambia el texto del botón
+                    ->icon('heroicon-s-eye'),
+                EditAction::make()->label('Editar'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

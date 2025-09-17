@@ -17,11 +17,8 @@ use App\Enums\PatientType;
 use App\Enums\EmployeeStatus;
 use App\Enums\Shift;
 use App\Enums\VisitType;
-use Filament\Tables\Table;
-
-//iconos
-use Filament\Support\Icons\Heroicon;
 use Carbon\Carbon;
+
 class PatientForm
 {
     // CORREGIDO: El método se llama "schema" y recibe un objeto Form
@@ -33,6 +30,7 @@ class PatientForm
                     ->columns(2)
                     ->icon('heroicon-s-identification')
                     ->iconColor('icon')
+                    
                     ->schema([
                         TextInput::make('medical_record_number')
                             ->label('Número de Expediente')
@@ -172,7 +170,7 @@ class PatientForm
                             ->visible(fn ($get) => $get('has_disability')),
                     ]),
 
-            ]);
+                ]);
     }
 
 
