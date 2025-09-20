@@ -52,7 +52,6 @@ class PatientForm
                                 // 1. UX: Convierte a mayúsculas mientras el usuario escribe
                                 '@input' => '$event.target.value = $event.target.value.toUpperCase()',
                             ])
-                            //->uppercase()
                             ->dehydrateStateUsing(fn (?string $state): ?string => $state ? strtoupper($state) : null)
                             ->unique(ignoreRecord: true)
                             ->regex('/^[A-Z]{1}[AEIOU]{1}[A-Z]{2}[0-9]{2}(0[1-9]|1[0-2])(0[1-9]|1[0-9]|2[0-9]|3[0-1])[HM]{1}(AS|BC|BS|CC|CS|CH|CL|CM|DF|DG|GT|GR|HG|JC|MC|MN|MS|NT|NL|OC|PL|QT|QR|SP|SL|SR|TC|TS|TL|VZ|YN|ZS){1}[B-DF-HJ-NP-TV-Z]{3}[0-9A-Z]{1}[0-9]{1}$/')
@@ -61,7 +60,6 @@ class PatientForm
                             ->afterStateUpdated(function ($get,$set) {
                                 $curp = $get('curp');
                                 if (strlen($curp) === 18) {
-                                    // --- Parte 1: Extraer y asignar la Fecha de Nacimiento ---
                                     $dateStr = substr($curp, 4, 6);
                                     $year = substr($dateStr, 0, 2);
                                     $month = substr($dateStr, 2, 2);
@@ -69,17 +67,9 @@ class PatientForm
                                     $century = (intval($year) > (int)date('y')) ? '19' : '20';
                                     $fullYear = $century . $year;
                                     $dateOfBirth = "{$fullYear}-{$month}-{$day}";
-                                    
-                                    // Se actualiza el campo de fecha
                                     $set('date_of_birth', $dateOfBirth);
-                                    
-                                    // --- Parte 2 (NUEVA): Calcular y asignar la Edad ---
-                                    // Usamos la fecha que acabamos de calcular para obtener la edad
                                     $age = Carbon::parse($dateOfBirth)->age;
-                                    // Actualizamos el campo de edad al mismo tiempo
                                     $set('age_display', $age . ' años');
-                        
-                                    // --- Parte 3: Extraer y asignar el Sexo ---
                                     $set('sex', (substr($curp, 10, 1) === 'H') ? 'Masculino' : 'Femenino');
                                 }
                             }),

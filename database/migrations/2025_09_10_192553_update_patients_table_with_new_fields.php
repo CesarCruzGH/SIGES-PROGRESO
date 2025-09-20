@@ -6,19 +6,10 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
+    /** La función agrega columnas a la tabla «patients» en un esquema de base de datos utilizando migraciones Laravel. */
     public function up(): void
     {
-        // Usamos Schema::table para MODIFICAR la tabla que ya existe.
         Schema::table('patients', function (Blueprint $table) {
-            // Esta migración AÑADE las nuevas columnas y quita las viejas.
-            // (Aquí va todo el código que te di en la respuesta anterior para este archivo)
-            // ...
-           // $table->dropColumn('age'); // Esto ya no es necesario si no la creaste en el paso 1, pero no hace daño dejarlo.
-            //$table->dropColumn('service'); // Igual que arriba.
-
             $table->foreignId('tutor_id')->nullable()->after('id')->constrained('tutors')->onDelete('set null');
             $table->foreignId('attending_doctor_id')->nullable()->after('tutor_id')->constrained('users')->onDelete('set null');
             $table->string('curp', 18)->unique()->nullable()->after('date_of_birth');
