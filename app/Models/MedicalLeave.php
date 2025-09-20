@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\MedicalLeaveStatus; // <-- Importar el Enum
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB; // <-- Importar DB
+use Illuminate\Support\Facades\Auth; // <-- Importar Auth
 use Illuminate\Database\Eloquent\SoftDeletes; // <-- 1. AÑADE ESTA LÍNEA
 
 class MedicalLeave extends Model
@@ -35,6 +36,14 @@ class MedicalLeave extends Model
     protected static function booted(): void
     {
         static::creating(function (MedicalLeave $leave) {
+            // Asigna automáticamente el doctor_id si no está definido
+            if (empty($leave->doctor_id)) {
+                $user = Auth::user();
+                if ($user) {
+                    $leave->doctor_id = $user->id;
+                }
+            }
+            
             // Se asegura de que el folio no se asigne si ya existe (aunque es improbable)
             if (empty($leave->folio)) {
                 $nextVal = DB::select("select nextval('medical_leave_folio_seq')")[0]->nextval;

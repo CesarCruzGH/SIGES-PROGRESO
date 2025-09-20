@@ -34,7 +34,7 @@ return new class extends Migration
             
             // --- CAMPO PARA EL WORKFLOW ---
             // Guardará el estado actual: 'borrador', 'pendiente_aprobacion', etc.
-            $table->string('status')->default('borrador');
+            $table->string('status')->default('pendiente_aprobacion');
             
             $table->timestamps(); // Campos created_at y updated_at
 
