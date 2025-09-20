@@ -32,6 +32,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Schemas\Components\Section;
 use Carbon\Carbon;
 use Dom\Text;
+use Filament\Actions\Action;
 use Illuminate\Support\Facades\Auth;
 use Filament\Tables\Columns\BadgeColumn;
 
@@ -169,6 +170,18 @@ class MedicalLeavesRelationManager extends RelationManager
                 DeleteAction::make(),
                 ForceDeleteAction::make(),
                 RestoreAction::make(),
+                // --- ACCIONES DE IMPRESIÓN ---
+                Action::make('print_patient_copy')
+                    ->label('Imprimir (Copia Paciente)')
+                    ->icon('heroicon-o-printer')
+                    ->url(fn ($record) => route('medical-leave.download', ['medicalLeaveId' => $record->id, 'copyType' => 'patient']))
+                    ->openUrlInNewTab(),
+
+                Action::make('print_institution_copy')
+                    ->label('Imprimir (Copia Institución)')
+                    ->icon('heroicon-o-document-duplicate')
+                    ->url(fn ($record) => route('medical-leave.download', ['medicalLeaveId' => $record->id, 'copyType' => 'institution']))
+                    ->openUrlInNewTab(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -176,8 +189,10 @@ class MedicalLeavesRelationManager extends RelationManager
                     DeleteBulkAction::make(),
                     //ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
+
                 ]),
             ])
+            
             ->modifyQueryUsing(fn (Builder $query) => $query
                 ->withoutGlobalScopes([
                     SoftDeletingScope::class,
