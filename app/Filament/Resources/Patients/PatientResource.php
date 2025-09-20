@@ -16,6 +16,9 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
+
+use App\Filament\Resources\Patients\RelationManagers\MedicalLeavesRelationManager;
+
 class PatientResource extends Resource
 {
     protected static ?string $model = Patient::class;
@@ -43,6 +46,7 @@ class PatientResource extends Resource
     {
         return [
             //
+            MedicalLeavesRelationManager::class,
         ];
     }
 

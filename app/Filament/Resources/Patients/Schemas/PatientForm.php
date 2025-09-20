@@ -128,7 +128,7 @@ class PatientForm
                             ->relationship('tutor', 'full_name')
                             ->searchable()
                             ->preload()
-                            ->createOptionForm([
+                            ->createOptionForm([ // Creación inline de tutores
                                 TextInput::make('full_name')->label('Nombre Completo')->required(),
                                 TextInput::make('relationship')->label('Parentesco')->required(),
                                 TextInput::make('phone_number')->label('Teléfono'),

@@ -51,7 +51,7 @@ class PatientInfolist
                 ]),
 
                 Section::make('Información del Tutor')
-                ->visible(fn ($record) => $record->tutor()->exists())
+                ->visible(fn ($record) => $record->tutor()->exists()) // Solo si existe tutor
                 ->columns()
                 ->schema([
                     TextEntry::make('tutor.full_name')->label('Nombre del Tutor'),

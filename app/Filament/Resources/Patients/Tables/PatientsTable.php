@@ -30,7 +30,7 @@ class PatientsTable
                     ->badge(), // El badge le da un estilo visual
                 TextColumn::make('tutor.full_name') // <-- Usando la relación
                     ->label('Tutor Asignado')
-                    ->searchable(),
+                    ->searchable(), // Permite buscar por nombre del tutor
                 TextColumn::make('attendingDoctor.name') // <-- Usando la relación
                     ->label('Médico')
                     ->searchable(),
