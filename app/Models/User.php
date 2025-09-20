@@ -47,4 +47,10 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function issuedMedicalLeaves()
+    {
+        return $this->hasMany(MedicalLeave::class, 'doctor_id');
+    }
+
 }

@@ -81,4 +81,9 @@ class Patient extends Model
         return $this->hasMany(SomatometricReading::class)->with('user')->latest();
 
     }
+
+    public function medicalLeaves()
+    {
+        return $this->hasMany(MedicalLeave::class);
+    }
 }
