@@ -14,9 +14,11 @@ use App\Enums\Shift;
 use App\Enums\VisitType;
 
 use Illuminate\Support\Facades\DB; // <-- ¡Añade esta línea!
+use Illuminate\Database\Eloquent\Factories\HasFactory; 
 
 class Patient extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'medical_record_number',
         'full_name',

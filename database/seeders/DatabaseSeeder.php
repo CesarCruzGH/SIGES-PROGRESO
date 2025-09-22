@@ -18,5 +18,9 @@ class DatabaseSeeder extends Seeder
         ->create([
             'password' => bcrypt('password'),
         ]);
+
+        $this->call([
+            PatientSeeder::class,
+        ]);
     }
 }
