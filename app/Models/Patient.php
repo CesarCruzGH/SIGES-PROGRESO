@@ -12,6 +12,7 @@ use App\Enums\PatientType;
 use App\Enums\EmployeeStatus;
 use App\Enums\Shift;
 use App\Enums\VisitType;
+use App\Enums\Locality;
 
 use Illuminate\Support\Facades\DB; // <-- ¡Añade esta línea!
 use Illuminate\Database\Eloquent\Factories\HasFactory; 
@@ -45,6 +46,8 @@ class Patient extends Model
         'employee_status' => EmployeeStatus::class, // Añadido
         'shift' => Shift::class, // Añadido
         'visit_type' => VisitType::class, // Añadido
+        'locality' => Locality::class, // <-- AÑADIDO
+
     ];
     protected static function booted(): void
     {

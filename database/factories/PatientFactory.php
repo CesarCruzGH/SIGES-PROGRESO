@@ -5,6 +5,7 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 //cases
 use App\Models\Tutor;
+use App\Enums\Locality;
 use App\Enums\PatientType;
 use App\Enums\Shift;
 use App\Enums\VisitType;
@@ -29,7 +30,7 @@ class PatientFactory extends Factory
             'date_of_birth' => $dateOfBirth,
             'sex' => $sex,
             'curp' => $this->faker->unique()->numerify('##################'), // CURP falso simple
-            'locality' => 'Progreso', // Localidad por defecto
+            'locality' => $this->faker->randomElement(Locality::cases()),
             'patient_type' => $this->faker->randomElement(PatientType::cases()),
             'shift' => $this->faker->randomElement(Shift::cases()),
             'visit_type' => $this->faker->randomElement(VisitType::cases()),

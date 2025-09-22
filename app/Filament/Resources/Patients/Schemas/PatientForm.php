@@ -16,6 +16,7 @@ use Filament\Schemas\Components\Section;
 use App\Enums\PatientType;
 use App\Enums\EmployeeStatus;
 use App\Enums\Shift;
+use App\Enums\Locality;
 use App\Enums\VisitType;
 use Carbon\Carbon;
 
@@ -79,6 +80,7 @@ class PatientForm
                             }),
                         Select::make('sex')
                             ->label('Sexo')
+                            ->placeholder('Selecciona una opción') 
                             ->options(['Masculino' => 'Masculino', 'Femenino' => 'Femenino'])
                             ->required(),
                             DatePicker::make('date_of_birth')
@@ -107,10 +109,14 @@ class PatientForm
                                 } else {
                                     $set('age_display', null);
                                 }
-                            }),
-                
-                        TextInput::make('age_display')->label('Edad')->disabled()->placeholder('Se calculará automáticamente')->dehydrated(false),
+                            }),   
                         TextInput::make('locality')->label('Localidad'),
+                        Select::make('locality')
+                        ->label('Localidad')
+                        ->options(Locality::getOptions())
+                        ->searchable()
+                        ->searchPrompt('Empieza a escribir para buscar...')
+                        ->required(),
                     ]),
 
                 Section::make('Clasificación del Paciente')
