@@ -13,14 +13,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()
-        ->count(10)
-        ->create([
-            'password' => bcrypt('password'),
-        ]);
-
         $this->call([
+            CoreDataSeeder::class,
             PatientSeeder::class,
-        ]);
+            UserSeeder::class,
+        ]);   
     }
 }

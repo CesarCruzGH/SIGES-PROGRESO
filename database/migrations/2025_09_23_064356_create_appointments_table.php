@@ -27,13 +27,12 @@ return new class extends Migration
             $table->longText('reason_for_visit');
     
             $table->foreignId('doctor_id')
+                ->nullable()
                 ->constrained('users')
-                ->cascadeOnDelete();
+                ->nullOnDelete();
     
             $table->string('clinic_room_number')->nullable(); // o ->integer('clinic_room_number')
-    
-            $table->dateTime('appointment_time');
-    
+        
             $table->text('notes')->nullable();
     
             $table->string('status')->default('pending');
