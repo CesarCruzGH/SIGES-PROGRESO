@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use App\Models\Patient;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Enums\PatientType; // <-- 1. Importar el Enum
 
 class ApiController extends Controller
 {
@@ -72,6 +73,8 @@ class ApiController extends Controller
         ]);
 
         $validatedData['status'] = 'pending_review';
+        $validatedData['patient_type'] = PatientType::EXTERNAL->value; // <-- 2. LA CORRECCIÓN
+
 
         $patient = Patient::create($validatedData);
 
