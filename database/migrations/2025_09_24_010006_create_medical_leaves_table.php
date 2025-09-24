@@ -18,9 +18,8 @@ return new class extends Migration
             $table->string('folio')->unique();
 
             // --- VÍNCULOS (RELACIONES) ---
-            // Con el paciente. Si se borra el paciente, se borran sus incapacidades.
-            $table->foreignId('patient_id')->constrained('patients')->cascadeOnDelete();
-            // Con el médico. Si se intenta borrar un médico, se restringirá si tiene incapacidades emitidas.
+            // Con el expediente. Si se borra el expediente, se borran sus incapacidades.
+            $table->foreignId('medical_record_id')->constrained('medical_records')->cascadeOnDelete();            // Con el médico. Si se intenta borrar un médico, se restringirá si tiene incapacidades emitidas.
             $table->foreignId('doctor_id')->constrained('users')->restrictOnDelete();
             
             // --- LAS TRES FECHAS ---

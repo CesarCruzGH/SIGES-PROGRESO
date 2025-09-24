@@ -10,7 +10,7 @@ class CreateSomatometricReadingsTable extends Migration
     {
         Schema::create('somatometric_readings', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->foreignId('patient_id')->constrained('patients')->onDelete('cascade');
+            $table->foreignId('medical_record_id')->constrained('medical_records')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->smallInteger('blood_pressure_systolic')->nullable();
             $table->smallInteger('blood_pressure_diastolic')->nullable();
