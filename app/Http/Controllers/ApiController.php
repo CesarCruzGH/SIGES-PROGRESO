@@ -49,7 +49,7 @@ class ApiController extends Controller
             'patient_id' => ['required', 'integer', 'exists:patients,id'], // El ID de NUESTRO sistema
             'service_id' => ['required', 'integer', 'exists:services,id'], // El ID de NUESTRO catálogo de servicios
             'reason_for_visit' => ['required', 'string'],
-            'clinic_room_number' => ['nullable', 'string', 'max:255'],
+            'clinic_room_number' => ['nullable', 'string', 'max:255'], //pendiente a eliminar
         ]);
 
         $appointment = Appointment::create($validatedData);
