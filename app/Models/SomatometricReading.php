@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class SomatometricReading extends Model
 {
     protected $fillable = [
-        'patient_id',
+        'medical_record_id',
         'user_id',
         'blood_pressure_systolic',
         'blood_pressure_diastolic',
@@ -20,9 +20,9 @@ class SomatometricReading extends Model
     ];
 
     // Relaciones
-    public function patient(): BelongsTo
+    public function medicalRecord(): BelongsTo
     {
-        return $this->belongsTo(Patient::class);
+        return $this->belongsTo(MedicalRecord::class);
     }
 
     public function recorder(): BelongsTo

@@ -13,7 +13,7 @@ class MedicalLeave extends Model
     use SoftDeletes; // <-- 2. AÑADE ESTA LÍNEA
     protected $fillable = [
         // 'folio' no va aquí porque se genera automáticamente
-        'patient_id',
+        'medical_record_id',
         'doctor_id',
         'issue_date',
         'start_date',
@@ -54,11 +54,11 @@ class MedicalLeave extends Model
     }
 
     /**
-     * Relación: Una incapacidad pertenece a un Paciente.
+     * Relación: Una incapacidad pertenece a un Expediente Médico.
      */
-    public function patient()
+    public function medicalRecord()
     {
-        return $this->belongsTo(Patient::class);
+        return $this->belongsTo(MedicalRecord::class);
     }
 
     /**

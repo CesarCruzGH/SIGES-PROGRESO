@@ -10,12 +10,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Appointment extends Model
 {
     protected $fillable = [
-        'ticket_number',
-        'patient_id',
+        'medical_record_id',
         'service_id',
-        'reason_for_visit',
         'doctor_id',
+        'ticket_number',
+        'shift',
+        'visit_type',
         'clinic_room_number',
+        'reason_for_visit',
         'notes',
         'status',
     ];
@@ -25,11 +27,11 @@ class Appointment extends Model
     ];
 
     /**
-     * Relación: Una cita pertenece a un Paciente.
+     * Relación: Una cita pertenece a un Expediente Médico.
      */
-    public function patient(): BelongsTo
+    public function medicalRecord(): BelongsTo
     {
-        return $this->belongsTo(Patient::class);
+        return $this->belongsTo(MedicalRecord::class);
     }
 
     /**

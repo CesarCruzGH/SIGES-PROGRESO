@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             CoreDataSeeder::class,
-            PatientSeeder::class,
+            DatabaseTestingSeeder::class,
             UserSeeder::class,
         ]);   
     }

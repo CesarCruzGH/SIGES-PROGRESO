@@ -6,9 +6,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 //cases
 use App\Models\Tutor;
 use App\Enums\Locality;
-use App\Enums\PatientType;
-use App\Enums\Shift;
-use App\Enums\VisitType;
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Patient>
  */
@@ -24,18 +21,18 @@ class PatientFactory extends Factory
         $sex = $this->faker->randomElement(['Masculino', 'Femenino']);
         // Por defecto, crea un paciente adulto
         $dateOfBirth = $this->faker->dateTimeBetween('-80 years', '-18 years');
-        $tutorId = null;
         return [
+            'tutor_id' => null,
             'full_name' => $this->faker->name($sex === 'Masculino' ? 'male' : 'female'),
             'date_of_birth' => $dateOfBirth,
             'sex' => $sex,
             'curp' => $this->faker->unique()->numerify('##################'), // CURP falso simple
             'locality' => $this->faker->randomElement(Locality::cases()),
-            'patient_type' => $this->faker->randomElement(PatientType::cases()),
-            'shift' => $this->faker->randomElement(Shift::cases()),
-            'visit_type' => $this->faker->randomElement(VisitType::cases()),
+            'contact_phone' => $this->faker->e164PhoneNumber(),
+            'address' => $this->faker->address(),
             'has_disability' => $this->faker->boolean(10), // 10% de probabilidad de tener discapacidad
-            'tutor_id' => $tutorId,
+            'disability_details' => $this->faker->optional()->sentence(),
+            'status' => 'active',
         ];
     }
     /**
