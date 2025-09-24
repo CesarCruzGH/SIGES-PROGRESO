@@ -15,7 +15,8 @@ use Filament\Schemas\Components\Section;
 // --- Importar todos los Enums ---
 use App\Enums\Locality;
 use Carbon\Carbon;
-
+use App\Enums\PatientType;
+use App\Enums\EmployeeStatus;
 class PatientForm
 {
     public static function configure(Schema $schema): Schema
@@ -108,6 +109,20 @@ class PatientForm
                         ->required(),
                         TextInput::make('contact_phone')->label('Teléfono de contacto')->tel(),
                         Textarea::make('address')->label('Dirección')->columnSpanFull(),
+                        Section::make('Clasificación del Expediente')
+                            ->relationship('medicalRecord') // <-- La magia está aquí
+                            ->columns(2)
+                            ->schema([
+                                Select::make('patient_type')
+                                    ->label('Tipo de Paciente')
+                                    ->options(PatientType::getOptions()) // Asumiendo que tienes el Enum
+                                    ->required()
+                                    ->live(),
+                                Select::make('employee_status')
+                                    ->label('Estatus (si es empleado)')
+                                    ->options(EmployeeStatus::getOptions()) // Asumiendo que tienes el Enum
+                                    ->visible(fn ( $get) => $get('patient_type') === PatientType::EMPLOYEE->value),
+                        ]),
                         TextInput::make('status')->label('Estatus')->default('active'),
                     ]),
 

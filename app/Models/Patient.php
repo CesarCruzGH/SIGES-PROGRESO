@@ -57,4 +57,14 @@ class Patient extends Model
     {
         return $this->hasOne(MedicalRecord::class);
     }
+    protected static function booted(): void
+    {
+        // El evento "created" se dispara DESPUÉS de que el paciente se guarda.
+        static::created(function (Patient $patient) {
+            // Creamos un MedicalRecord asociado.
+            // Eloquent se encarga automáticamente de asignar el 'patient_id'.
+            // El 'record_number' se generará automáticamente por el booted() del MedicalRecord.
+            $patient->medicalRecord()->create([]);
+        });
+    }
 }

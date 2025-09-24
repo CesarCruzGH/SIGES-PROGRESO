@@ -57,6 +57,8 @@ class PatientResource extends Resource
             'create' => CreatePatient::route('/create'),
             //'view' => ViewPatient::route('/{record}'),
             'edit' => EditPatient::route('/{record}/edit'),
+            'view' => ViewPatient::route('/{record}'), // Necesario para el ViewAction
+
         ];
     }
 }
