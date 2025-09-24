@@ -46,8 +46,7 @@ class PatientResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
-            MedicalLeavesRelationManager::class,
+            // Relacionadores movidos a MedicalRecordResource
         ];
     }
 

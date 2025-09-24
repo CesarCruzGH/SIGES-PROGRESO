@@ -13,11 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Schemas\Components\Section;
 
 // --- Importar todos los Enums ---
-use App\Enums\PatientType;
-use App\Enums\EmployeeStatus;
-use App\Enums\Shift;
 use App\Enums\Locality;
-use App\Enums\VisitType;
 use Carbon\Carbon;
 
 class PatientForm
@@ -32,13 +28,7 @@ class PatientForm
                     ->iconColor('icon')
                     
                     ->schema([
-                        TextInput::make('medical_record_number')
-                            ->label('Número de Expediente')
-                            ->maxLength(20)
-                            ->unique(ignoreRecord: true)
-                            ->disabled()
-                            ->dehydrated()
-                            ->placeholder('Se generará automáticamente al guardar'),
+                        // Número de Expediente ahora pertenece a MedicalRecord, no se edita aquí
                         TextInput::make('full_name')
                             ->label('Nombre Completo')
                             ->required()
@@ -110,27 +100,15 @@ class PatientForm
                                     $set('age_display', null);
                                 }
                             }),   
-                        TextInput::make('locality')->label('Localidad'),
                         Select::make('locality')
                         ->label('Localidad')
                         ->options(Locality::getOptions())
                         ->searchable()
                         ->searchPrompt('Empieza a escribir para buscar...')
                         ->required(),
-                    ]),
-
-                Section::make('Clasificación del Paciente')
-                    ->columns(2)
-                    ->schema([
-                        Select::make('patient_type')
-                            ->label('Tipo de Paciente')
-                            ->options(PatientType::getOptions()) 
-                            ->required()
-                            ->live(),
-                        Select::make('employee_status')
-                            ->label('Estatus (si es empleado)')
-                            ->options(EmployeeStatus::getOptions()) 
-                            ->visible(fn ($get) => $get('patient_type') === PatientType::EMPLOYEE->value),
+                        TextInput::make('contact_phone')->label('Teléfono de contacto')->tel(),
+                        Textarea::make('address')->label('Dirección')->columnSpanFull(),
+                        TextInput::make('status')->label('Estatus')->default('active'),
                     ]),
 
                 Section::make('Tutor (para menores de edad)')
@@ -153,20 +131,9 @@ class PatientForm
                             ->visible(fn ($get) => $get('is_pediatric')),
                     ]),
 
-                Section::make('Detalles Médicos y Administrativos') 
+                Section::make('Condición de Discapacidad') 
                     ->columns(2)
                     ->schema([
-                        Select::make('attending_doctor_id')
-                            ->label('Médico que Atiende')
-                            ->relationship('attendingDoctor', 'name', modifyQueryUsing: fn (Builder $query) => $query->where('role', 'doctor'))
-                            ->searchable()
-                            ->preload(),
-                        Select::make('shift')
-                            ->label('Turno')
-                            ->options(Shift::getOptions()), 
-                        Select::make('visit_type')
-                            ->label('Tipo de Visita')
-                            ->options(VisitType::getOptions()), 
                         Toggle::make('has_disability')
                             ->label('¿Tiene alguna discapacidad?')
                             ->live(),

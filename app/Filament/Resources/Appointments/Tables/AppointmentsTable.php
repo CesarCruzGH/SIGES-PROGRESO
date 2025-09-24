@@ -17,9 +17,13 @@ class AppointmentsTable
             ->columns([
                 TextColumn::make('ticket_number')
                     ->searchable(),
-                TextColumn::make('patient_id')
-                    ->numeric()
+                TextColumn::make('medicalRecord.record_number')
+                    ->label('Expediente')
+                    ->searchable()
                     ->sortable(),
+                TextColumn::make('medicalRecord.patient.full_name')
+                    ->label('Paciente')
+                    ->searchable(),
                 TextColumn::make('service_id')
                     ->numeric()
                     ->sortable(),
