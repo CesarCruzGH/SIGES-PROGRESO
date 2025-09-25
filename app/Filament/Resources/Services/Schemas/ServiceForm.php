@@ -34,16 +34,7 @@ class ServiceForm
                 Textarea::make('description')
                     ->label('Descripción')
                     ->columnSpanFull(),
-                TextInput::make('cost')
-                    ->label('Costo')
-                    ->required()
-                    ->numeric()
-                    ->prefix('$'),
-                TextInput::make('department')
-                    ->label('Departamento'),
-                TextInput::make('schedule')
-                    ->label('Horario'),
-
+/*
                 // --- MEJORAS DE UX ---
                 Select::make('shift')
                     ->label('Turno')
@@ -54,7 +45,7 @@ class ServiceForm
                     ->relationship('responsible', 'name') // Le decimos que use la relación
                     ->searchable()
                     ->preload(),
-
+*/
                 Toggle::make('is_active')
                     ->label('Servicio Activo')
                     ->required(),

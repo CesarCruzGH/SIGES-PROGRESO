@@ -17,7 +17,7 @@ class PdfGeneratorController extends Controller
             }
 
             // Cargar la incapacidad con sus relaciones para optimizar consultas
-            $medicalLeave = MedicalLeave::with(['patient', 'doctor'])->findOrFail($medicalLeaveId);
+            $medicalLeave = MedicalLeave::with(['medicalRecord.patient', 'doctor'])->findOrFail($medicalLeaveId);
 
             // Cargar la vista y pasarle los datos
             $pdf = Pdf::loadView('pdf.medical_leave', [

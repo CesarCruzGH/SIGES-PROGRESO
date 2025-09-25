@@ -2,85 +2,116 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PatientType;
 use App\Models\Appointment;
+use App\Models\MedicalRecord;
 use App\Models\Patient;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Enums\PatientType; // <-- 1. Importar el Enum
+use Illuminate\Support\Facades\DB;
 
 class ApiController extends Controller
 {
     /**
-     * El "Traductor de Identidades".
-     * Recibe un identificador único compartido (CURP o N° Expediente)
-     * y devuelve nuestro ID interno para ese paciente.
-     * Este es el PRIMER paso obligatorio antes de registrar una cita.
+     * El "Traductor de Identidades" actualizado.
+     * Ahora devuelve explícitamente el N° de Expediente.
      */
     public function searchPatient(Request $request): JsonResponse
     {
         $curp = $request->query('curp');
-        $mrn = $request->query('medical_record_number');
+        // El otro sistema ahora buscará por 'record_number'
+        $recordNumber = $request->query('record_number'); 
 
-        if (!$curp && !$mrn) {
+        if (!$curp && !$recordNumber) {
             return response()->json(['message' => 'Se requiere un CURP o número de expediente para la búsqueda.'], 400);
         }
 
-        $patient = Patient::query()
-            ->when($curp, fn ($query, $curp) => $query->where('curp', $curp))
-            ->when($mrn, fn ($query, $mrn) => $query->where('medical_record_number', $mrn))
-            ->select('id', 'full_name', 'curp', 'medical_record_number')
-            ->first();
+        $patientQuery = Patient::query();
+
+        if ($curp) {
+            $patientQuery->where('curp', $curp);
+        }
+        
+        if ($recordNumber) {
+            // Buscamos a través de la relación del expediente
+            $patientQuery->whereHas('medicalRecord', function ($query) use ($recordNumber) {
+                $query->where('record_number', $recordNumber);
+            });
+        }
+        
+        // Cargamos la relación para poder acceder al número de expediente
+        $patient = $patientQuery->with('medicalRecord')->first();
 
         if (!$patient) {
             return response()->json(['message' => 'Paciente no encontrado en SIGES-PROGRESO.'], 404);
         }
 
-        return response()->json($patient);
+        return response()->json([
+            'id' => $patient->id,
+            'full_name' => $patient->full_name,
+            'curp' => $patient->curp,
+            // Devolvemos el N° de Expediente, que es la clave para la siguiente llamada
+            'record_number' => $patient->medicalRecord->record_number, 
+        ]);
     }
 
     /**
-     * Registra una nueva cita.
-     * Es el SEGUNDO paso, y requiere el `patient_id` que se obtuvo de `searchPatient`.
+     * El método "Todo en Uno" refactorizado para la nueva arquitectura.
      */
-    public function storeAppointment(Request $request): JsonResponse
+    public function storeVisit(Request $request): JsonResponse
     {
         $validatedData = $request->validate([
+            // Ya no esperamos datos del paciente. solo el N° de Expediente si existe.
+            'record_number' => ['nullable', 'string', 'exists:medical_records,record_number'],
+            
             'ticket_number' => ['required', 'string', 'max:255', 'unique:appointments,ticket_number'],
-            'patient_id' => ['required', 'integer', 'exists:patients,id'], // El ID de NUESTRO sistema
-            'service_id' => ['required', 'integer', 'exists:services,id'], // El ID de NUESTRO catálogo de servicios
+            'service_id' => ['required', 'integer', 'exists:services,id'],
             'reason_for_visit' => ['required', 'string'],
-            'clinic_room_number' => ['nullable', 'string', 'max:255'], //pendiente a eliminar
         ]);
 
-        $appointment = Appointment::create($validatedData);
+        $medicalRecord = null;
+        $newPatientCreated = false;
 
-        return response()->json([
-            'message' => 'Cita registrada exitosamente en SIGES-PROGRESO.',
-            'appointment_id' => $appointment->id,
-        ], 201);
-    }
+        DB::beginTransaction();
+        try {
+            if (isset($validatedData['record_number'])) {
+                // Caso 1: Paciente existente. Lo encontramos.
+                $medicalRecord = MedicalRecord::where('record_number', $validatedData['record_number'])->firstOrFail();
+            } else {
+                // --- ¡LA NUEVA LÓGICA CLAVE! ---
+                // Caso 2: Paciente nuevo. No vienen datos personales.
+                
+                // a) Creamos el "paciente fantasma". Estará casi vacío.
+                $patient = Patient::create([
+                    'status' => 'pending_review', // Marcado para la recepcionista.
+                    // full_name, date_of_birth, etc., son nullable, así que no hay problema.
+                ]);
 
-    /**
-     * Gestiona la solicitud de un nuevo expediente para un paciente no encontrado.
-     */
-    public function requestNewPatient(Request $request): JsonResponse
-    {
-        $validatedData = $request->validate([
-            'full_name' => ['required', 'string', 'max:255'],
-            'date_of_birth' => ['required', 'date'],
-            'sex' => ['required', 'string', 'max:50'],
-            'curp' => ['nullable', 'string', 'max:18', 'unique:patients,curp'],
-        ]);
+                // b) El evento 'created' del modelo Patient crea automáticamente el MedicalRecord.
+                //    Simplemente lo recuperamos.
+                $medicalRecord = $patient->medicalRecord;
+                $newPatientCreated = true;
+            }
 
-        $validatedData['status'] = 'pending_review';
-        $validatedData['patient_type'] = PatientType::EXTERNAL->value; // <-- 2. LA CORRECCIÓN
+            // c) Creamos la visita y la vinculamos al expediente (ya sea el encontrado o el nuevo).
+            $appointment = $medicalRecord->appointments()->create([
+                'ticket_number' => $validatedData['ticket_number'],
+                'service_id' => $validatedData['service_id'],
+                'reason_for_visit' => $validatedData['reason_for_visit'],
+            ]);
+            
+            DB::commit();
 
+            return response()->json([
+                'message' => 'Visita registrada exitosamente en SIGES-PROGRESO.',
+                'appointment_id' => $appointment->id,
+                'medical_record_id' => $medicalRecord->id,
+                'new_patient_created' => $newPatientCreated,
+            ], 201);
 
-        $patient = Patient::create($validatedData);
-
-        return response()->json([
-            'message' => 'Solicitud de expediente recibida. El ID es provisional y está pendiente de revisión por la recepcionista.',
-            'patient_id' => $patient->id,
-        ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Error interno al procesar la visita.', 'error' => $e->getMessage()], 500);
+        }
     }
 }

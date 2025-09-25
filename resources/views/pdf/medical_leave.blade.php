@@ -127,13 +127,14 @@
         <div class="info-section">
             <h3>Datos del Paciente</h3>
             <div class="info-grid">
+                {{-- --- ¡CORRECCIONES APLICADAS AQUÍ! --- --}}
                 <div class="row">
-                    <div class="cell"><strong>Nombre:</strong> {{ $medicalLeave->patient->full_name }}</div>
-                    <div class="cell"><strong>N° Expediente:</strong> {{ $medicalLeave->patient->medical_record_number }}</div>
+                    <div class="cell"><strong>Nombre:</strong> {{ $medicalLeave->medicalRecord->patient->full_name }}</div>
+                    <div class="cell"><strong>N° Expediente:</strong> {{ $medicalLeave->medicalRecord->record_number }}</div>
                 </div>
                 <div class="row">
-                    <div class="cell"><strong>CURP:</strong> {{ $medicalLeave->patient->curp ?? 'N/A' }}</div>
-                    <div class="cell"><strong>Tipo de Paciente:</strong> {{ $medicalLeave->patient->patient_type }}</div>
+                    <div class="cell"><strong>CURP:</strong> {{ $medicalLeave->medicalRecord->patient->curp ?? 'N/A' }}</div>
+                    <div class="cell"><strong>Tipo de Paciente:</strong> {{ $medicalLeave->medicalRecord->patient_type }}</div>
                 </div>
             </div>
         </div>

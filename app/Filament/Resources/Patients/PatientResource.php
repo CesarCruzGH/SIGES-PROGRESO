@@ -20,6 +20,11 @@ use Filament\Tables\Table;
 use App\Filament\Resources\Patients\RelationManagers\MedicalLeavesRelationManager;
 use Filament\Schemas\Components\Form;
 
+// Importa estas clases al principio del archivo:
+use Illuminate\Database\Eloquent\Builder;
+use Filament\Resources\Components\Tab;
+use Filament\Schemas\Components\Tabs;
+
 class PatientResource extends Resource
 {
     protected static ?string $model = Patient::class;
@@ -59,6 +64,20 @@ class PatientResource extends Resource
             'edit' => EditPatient::route('/{record}/edit'),
             'view' => ViewPatient::route('/{record}'), // Necesario para el ViewAction
 
+        ];
+    }
+    public static function getTabs(): array
+    {
+        return [
+            'all' => Tabs::make('Todos los Pacientes'),
+
+            'pending_review' => Tabs::make('Pendientes de Revisión')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'pending_review'))
+                ->badge(Patient::query()->where('status', 'pending_review')->count())
+                ->badgeColor('warning'),
+
+            'active' => Tabs::make('Activos')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'active')),
         ];
     }
 }

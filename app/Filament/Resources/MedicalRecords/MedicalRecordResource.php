@@ -17,8 +17,8 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
 use App\Filament\Resources\MedicalRecords\RelationManagers\AppointmentsRelationManager;
-use App\Filament\Resources\MedicalRecordResource\RelationManagers\MedicalLeavesRelationManager;
-use App\Filament\Resources\MedicalRecordResource\RelationManagers\SomatometricReadingsRelationManager;
+use App\Filament\Resources\MedicalRecords\RelationManagers\MedicalLeavesRelationManager;
+use App\Filament\Resources\MedicalRecords\RelationManagers\SomatometricReadingsRelationManager;
 
 class MedicalRecordResource extends Resource
 {
@@ -48,8 +48,8 @@ class MedicalRecordResource extends Resource
        // ¡Aquí conectamos todos los historiales clínicos al expediente!
         return [
             AppointmentsRelationManager::class,
-            //MedicalLeavesRelationManager::class,
-            //SomatometricReadingsRelationManager::class,
+            MedicalLeavesRelationManager::class,
+            SomatometricReadingsRelationManager::class,
         ];
     }
 

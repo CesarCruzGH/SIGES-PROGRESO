@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Patients\RelationManagers;
+namespace App\Filament\Resources\MedicalRecords\RelationManagers;
 
 use App\Enums\MedicalLeaveStatus;
 use Filament\Actions\AssociateAction;
@@ -146,7 +146,8 @@ class MedicalLeavesRelationManager extends RelationManager
                     ->date('d/m/Y')
                     ->sortable(),
                 TextColumn::make('doctor.name')
-                    ->label('Médico Emisor'),
+                    ->label('Médico Emisor')
+                    ->getStateUsing(fn ($record) => $record->doctor?->name ?? 'N/A'), // <-- LA SOLUCIÓN,
                 TextColumn::make('status')
                     ->label('Estado')
                     ->badge()
