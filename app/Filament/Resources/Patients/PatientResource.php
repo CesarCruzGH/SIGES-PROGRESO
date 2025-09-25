@@ -32,7 +32,9 @@ class PatientResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     protected static ?string $recordTitleAttribute = 'full_name';
-
+    protected static ?string $navigationLabel = 'Pacientes';
+    protected static ?string $modelLabel = 'Pacientes';
+    protected static ?string $pluralModelLabel = 'Pacientes';
     public static function form(Schema $schema): Schema
     {
         return PatientForm::configure($schema);
@@ -65,6 +67,15 @@ class PatientResource extends Resource
             'view' => ViewPatient::route('/{record}'), // Necesario para el ViewAction
 
         ];
+    }
+    public static function getNavigationBadge(): ?string
+    {
+        // Contamos cuántos pacientes tienen el estado 'pending_review'
+        $count = Patient::where('status', 'pending_review')->count();
+    
+        // Si el contador es cero, no devolvemos nada (la insignia no aparecerá)
+        // Si es mayor que cero, devolvemos el número como un string.
+        return $count > 0 ? (string) $count : null;
     }
     public static function getTabs(): array
     {

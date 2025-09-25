@@ -27,7 +27,9 @@ class MedicalRecordResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     protected static ?string $recordTitleAttribute = 'record_number';
-
+    protected static ?string $navigationLabel = 'Expedientes';
+    protected static ?string $modelLabel = 'Expediente';
+    protected static ?string $pluralModelLabel = 'Expedientes';
     public static function form(Schema $schema): Schema
     {
         return MedicalRecordForm::configure($schema);
