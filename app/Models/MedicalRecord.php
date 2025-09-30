@@ -19,6 +19,7 @@ class MedicalRecord extends Model
         'record_number',
         'patient_type',
         'employee_status',
+        'consent_form_path',
     ];
 
     protected $casts = [

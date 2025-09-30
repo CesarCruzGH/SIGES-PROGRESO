@@ -12,10 +12,11 @@ class DatabaseTestingSeeder extends Seeder
     public function run(): void
     {
         // 50 expedientes para pacientes adultos
-        \App\Models\MedicalRecord::factory()->count(50)->create();
+        \App\Models\Patient::factory()->count(50)->create();
 
         // 25 expedientes para pacientes menores (usa el estado forMinor de la factory)
-        \App\Models\MedicalRecord::factory()->count(25)->forMinor()->create();
+        \App\Models\Patient::factory()->count(25)->isMinor()->create();
+
     }
 }
 

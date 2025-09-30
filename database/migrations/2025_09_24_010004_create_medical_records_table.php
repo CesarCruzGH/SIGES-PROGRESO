@@ -25,6 +25,10 @@ return new class extends Migration
             $table->string('patient_type', 100)->nullable(); 
             $table->string('employee_status', 100)->nullable();
 
+            // --- CAMPO PARA EL CONSENTIMIENTO ---
+            // Guardará la ruta del archivo del consentimiento informado escaneado.
+            $table->string('consent_form_path')->nullable();
+
             $table->timestamps();
         });
     }

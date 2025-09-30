@@ -68,7 +68,8 @@ class AppointmentsTable
                     // Solo visible si el paciente está pendiente
                     ->visible(fn ($record) => $record->medicalRecord->patient->status === 'pending_review')
                     // Lleva directamente a la página de edición del paciente
-                    ->url(fn ($record): string => PatientResource::getUrl('edit', ['record' => $record->medicalRecord->patient])),
+                    //->url(fn ($record): string => PatientResource::getUrl('edit', ['record' => $record->medicalRecord->patient]))
+                    ->url(fn ($record): string => PatientResource::getUrl('edit', ['record' => $record->medicalRecord->patient,'appointment_id' => $record->id])), // <-- La "etiqueta"
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

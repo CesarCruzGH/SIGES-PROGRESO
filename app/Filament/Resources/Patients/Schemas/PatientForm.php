@@ -17,6 +17,11 @@ use App\Enums\Locality;
 use Carbon\Carbon;
 use App\Enums\PatientType;
 use App\Enums\EmployeeStatus;
+
+
+use Filament\Forms\Components\FileUpload; // <-- Importar FileUpload
+use Illuminate\Database\Eloquent\Model; // <-- Importar Model
+
 class PatientForm
 {
     public static function configure(Schema $schema): Schema
@@ -27,7 +32,6 @@ class PatientForm
                     ->columns(2)
                     ->icon('heroicon-s-identification')
                     ->iconColor('icon')
-                    
                     ->schema([
                         // Número de Expediente ahora pertenece a MedicalRecord, no se edita aquí
                         TextInput::make('full_name')
@@ -124,6 +128,30 @@ class PatientForm
                                     ->visible(fn ( $get) => $get('patient_type') === PatientType::EMPLOYEE->value),
                         ]),
                         TextInput::make('status')->label('Estatus')->default('active'),
+                    ]),
+
+                    Section::make('Documento de Consentimiento Informado')
+                    ->relationship('medicalRecord') // Sigue apuntando al expediente
+                    ->schema([
+                        FileUpload::make('consent_form_path')
+                            ->label('Archivo de Consentimiento Firmado')
+                            ->disk('public') // Usa el "almacén" público que configuramos
+                            ->directory('consent_forms') // Guarda los archivos en 'storage/app/public/consent_forms'
+                            ->acceptedFileTypes(['application/pdf'])
+                            ->maxSize(2048) // Límite de 2MB
+                            ->downloadable() // Permite descargar el archivo una vez subido
+                            ->helperText('Subir el documento PDF escaneado y firmado por el paciente.')
+                            
+                            // Lógica de visibilidad:
+                            // 1. Si el campo ya tiene un archivo, muéstralo siempre.
+                            // 2. Si está vacío, muéstralo solo si el estado del paciente es 'pending_review'.
+                           /* ->visible(function ($get, ?Model $record): bool {
+                                if ($get('consent_form_path')) {
+                                    return true; // Siempre visible si ya hay un archivo
+                                }
+                                // La ruta para acceder al estado del paciente es '../../status'
+                                return $get('../../status') === 'pending_review';
+                            })*/,
                     ]),
 
                 Section::make('Tutor (para menores de edad)')
