@@ -16,6 +16,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use App\Enums\AppointmentStatus; // Importar el Enum de estados
+use Illuminate\Database\Eloquent\Builder;
 
 class AppointmentResource extends Resource
 {
@@ -82,4 +83,6 @@ class AppointmentResource extends Resource
             'edit' => EditAppointment::route('/{record}/edit'),
         ];
     }
+
+    // Las pestañas se definen en la página ListAppointments
 }

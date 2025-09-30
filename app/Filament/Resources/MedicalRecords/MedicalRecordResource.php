@@ -25,7 +25,6 @@ class MedicalRecordResource extends Resource
     protected static ?string $model = MedicalRecord::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-
     protected static ?string $recordTitleAttribute = 'record_number';
     protected static ?string $navigationLabel = 'Expedientes';
     protected static ?string $modelLabel = 'Expediente';
