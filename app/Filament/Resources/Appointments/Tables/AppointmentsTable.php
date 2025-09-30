@@ -19,6 +19,7 @@ class AppointmentsTable
         return $table
             ->columns([
                 TextColumn::make('ticket_number')
+                    ->label('Ticket')
                     ->searchable(),
                 TextColumn::make('medicalRecord.record_number')
                     ->label('Expediente')
@@ -31,20 +32,19 @@ class AppointmentsTable
                     ->default(fn ($record) => 'Expediente Pendiente')
                     ->description(fn ($record) => $record->medicalRecord->patient->status === 'pending_review' ? 'Requiere completar datos' : null)
                     ->url(fn ($record): string => PatientResource::getUrl('edit', ['record' => $record->medicalRecord->patient])),
-                TextColumn::make('service.name')    
+                TextColumn::make('service.name')
+                    ->label('Servicio')    
                     ->sortable(),
                 TextColumn::make('doctor.name')
                     ->label('Médico Asignado')
                     ->searchable()
                     ->sortable()
-                    ->default('Sin asignar'),
+                    ->default('Sin asignar'), 
                 TextColumn::make('clinic_room_number')
                     ->searchable(),
-                TextColumn::make('appointment_time')
-                    ->dateTime()
-                    ->sortable(),
                 TextColumn::make('status')
-                    ->searchable(),
+                    ->searchable()
+                    ->badge(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

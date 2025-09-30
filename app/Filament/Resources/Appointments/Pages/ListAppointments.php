@@ -23,13 +23,14 @@ class ListAppointments extends ListRecords
     public function getTabs(): array
     {
         $tabs = [
-            'all' => Tab::make('Todas'),
+            'all' => Tab::make('Todas las Visitas'),
         ];
 
         foreach (AppointmentStatus::cases() as $status) {
             $tabs[$status->value] = Tab::make($status->getLabel())
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', $status))
-                ->badge(AppointmentResource::getModel()::query()->where('status', $status)->count());
+                ->badge(AppointmentResource::getModel()::query()->where('status', $status)->count())
+                ->badgeColor($status->getColor());
         }
 
         return $tabs;
