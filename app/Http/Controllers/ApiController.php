@@ -50,6 +50,7 @@ class ApiController extends Controller
             'id' => $patient->id,
             'full_name' => $patient->full_name,
             'curp' => $patient->curp,
+            'contact_phone' => $patient->contact_phone,
             // Devolvemos el N° de Expediente, que es la clave para la siguiente llamada
             'record_number' => $patient->medicalRecord->record_number, 
         ]);

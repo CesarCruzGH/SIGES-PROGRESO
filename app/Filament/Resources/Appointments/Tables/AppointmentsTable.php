@@ -31,8 +31,7 @@ class AppointmentsTable
                     ->default(fn ($record) => 'Expediente Pendiente')
                     ->description(fn ($record) => $record->medicalRecord->patient->status === 'pending_review' ? 'Requiere completar datos' : null)
                     ->url(fn ($record): string => PatientResource::getUrl('edit', ['record' => $record->medicalRecord->patient])),
-                TextColumn::make('service_id')
-                    ->numeric()
+                TextColumn::make('service.name')
                     ->sortable(),
                 TextColumn::make('doctor_id')
                     ->numeric()
