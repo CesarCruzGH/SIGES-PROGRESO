@@ -2,14 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\PatientType;
+// --- Imports necesarios ---
 use App\Models\Appointment;
 use App\Models\MedicalRecord;
 use App\Models\Patient;
+use App\Models\User;
+use Filament\Actions\Action;
+
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-
+use Filament\Notifications\Notification;
+use Filament\Notifications\Actions\Action as NotificationAction; // Alias para la acción de la notificación
+use App\Filament\Resources\Appointments\AppointmentResource;
 class ApiController extends Controller
 {
     /**
@@ -62,9 +67,7 @@ class ApiController extends Controller
     public function storeVisit(Request $request): JsonResponse
     {
         $validatedData = $request->validate([
-            // Ya no esperamos datos del paciente. solo el N° de Expediente si existe.
             'record_number' => ['nullable', 'string', 'exists:medical_records,record_number'],
-            
             'ticket_number' => ['required', 'string', 'max:255', 'unique:appointments,ticket_number'],
             'service_id' => ['required', 'integer', 'exists:services,id'],
             'reason_for_visit' => ['required', 'string'],
@@ -76,25 +79,13 @@ class ApiController extends Controller
         DB::beginTransaction();
         try {
             if (isset($validatedData['record_number'])) {
-                // Caso 1: Paciente existente. Lo encontramos.
                 $medicalRecord = MedicalRecord::where('record_number', $validatedData['record_number'])->firstOrFail();
             } else {
-                // --- ¡LA NUEVA LÓGICA CLAVE! ---
-                // Caso 2: Paciente nuevo. No vienen datos personales.
-                
-                // a) Creamos el "paciente fantasma". Estará casi vacío.
-                $patient = Patient::create([
-                    'status' => 'pending_review', // Marcado para la recepcionista.
-                    // full_name, date_of_birth, etc., son nullable, así que no hay problema.
-                ]);
-
-                // b) El evento 'created' del modelo Patient crea automáticamente el MedicalRecord.
-                //    Simplemente lo recuperamos.
+                $patient = Patient::create(['status' => 'pending_review']);
                 $medicalRecord = $patient->medicalRecord;
                 $newPatientCreated = true;
             }
 
-            // c) Creamos la visita y la vinculamos al expediente (ya sea el encontrado o el nuevo).
             $appointment = $medicalRecord->appointments()->create([
                 'ticket_number' => $validatedData['ticket_number'],
                 'service_id' => $validatedData['service_id'],
@@ -102,6 +93,23 @@ class ApiController extends Controller
             ]);
             
             DB::commit();
+
+            // --- LÓGICA DE NOTIFICACIÓN CORREGIDA ---
+            // Para pruebas, notificamos a TODOS los usuarios.
+            $recipients = User::all(); 
+
+            Notification::make()
+                ->title('Nueva Visita Registrada')
+                ->body("Se ha registrado una nueva visita con el ticket #{$appointment->ticket_number}")
+                ->icon('heroicon-o-ticket')
+                ->actions([
+                    // Usamos el alias que definimos arriba
+                    Action::make('view')
+                        ->label('Ver Visita')
+                        ->url(AppointmentResource::getUrl('edit', ['record' => $appointment]))
+                        ->markAsRead(),
+                ])
+                ->sendToDatabase($recipients);
 
             return response()->json([
                 'message' => 'Visita registrada exitosamente en SIGES-PROGRESO.',

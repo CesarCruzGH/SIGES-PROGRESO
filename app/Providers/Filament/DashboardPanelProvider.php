@@ -29,7 +29,8 @@ class DashboardPanelProvider extends PanelProvider
             ->id('dashboard')
             ->path('dashboard')
             ->login()
-      
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('10s') // Revisa si hay notificaciones nuevas cada 10 segundos
             ->sidebarCollapsibleOnDesktop()
             ->colors([
                 'primary' => Color::hex('#f4b857'),
