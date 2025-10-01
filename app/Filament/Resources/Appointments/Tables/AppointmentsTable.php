@@ -17,6 +17,9 @@ class AppointmentsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->heading('Visitas')
+            ->description('Control de Visitas')
+            ->poll('10s')
             ->columns([
                 TextColumn::make('ticket_number')
                     ->label('Ticket')
