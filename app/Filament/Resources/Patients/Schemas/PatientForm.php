@@ -11,6 +11,7 @@ use Filament\Forms\Get;
 use Filament\Schemas\Schema; 
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Schemas\Components\Section;
+use Asmit\FilamentUpload\Forms\Components\AdvancedFileUpload;
 
 // --- Importar todos los Enums ---
 use App\Enums\Locality;
@@ -133,16 +134,19 @@ class PatientForm
                     Section::make('Documento de Consentimiento Informado')
                     ->relationship('medicalRecord') // Sigue apuntando al expediente
                     ->schema([
-                        FileUpload::make('consent_form_path')
+                        AdvancedFileUpload::make('consent_form_path')
                             ->label('Archivo de Consentimiento Firmado')
-                            ->openable()
-                                ->panelLayout('grid')
-                            ->disk('public') // Usa el "almacén" público que configuramos
-                            ->directory('consent_forms') // Guarda los archivos en 'storage/app/public/consent_forms'
+                            ->disk('public')
+                            ->directory('consent_forms')
                             ->acceptedFileTypes(['application/pdf'])
-                            ->maxSize(2048) // Límite de 2MB
+                            ->maxSize(2048)
                             ->downloadable()
                             ->helperText('Subir el documento PDF escaneado y firmado por el paciente.')
+                            ->required(function ( $get): bool {
+                                // El campo es obligatorio solo si el paciente está pendiente de revisión.
+                                // La ruta '../../status' sube desde la relación hasta el modelo principal.
+                                return $get('../../status') === 'pending_review';
+                            })
                             
                             // Lógica de visibilidad:
                             // 1. Si el campo ya tiene un archivo, muéstralo siempre.
