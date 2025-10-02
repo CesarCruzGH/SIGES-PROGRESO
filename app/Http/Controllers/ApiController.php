@@ -97,17 +97,21 @@ class ApiController extends Controller
             // --- LÓGICA DE NOTIFICACIÓN CORREGIDA ---
             // Para pruebas, notificamos a TODOS los usuarios.
             $recipients = User::all(); 
-
+            // Buscamos solo a los usuarios con el rol de recepcionista.
+            //$recipients = User::where('role', 'recepcionista')->get();
             Notification::make()
                 ->title('Nueva Visita Registrada')
-                ->body("Se ha registrado una nueva visita con el ticket #{$appointment->ticket_number}")
-                ->icon('heroicon-o-ticket')
+                ->body("Se ha registrado una nueva visita con el ticket #{$appointment->ticket_number} para el servicio de '{$appointment->service->name}' con motivo de '{$appointment->reason_for_visit}'")
+                ->icon('heroicon-s-ticket')
+                ->info()
+                ->duration(8000)
                 ->actions([
                     // Usamos el alias que definimos arriba
                     Action::make('view')
                         ->label('Ver Visita')
                         ->url(AppointmentResource::getUrl('edit', ['record' => $appointment]))
-                        ->markAsRead(),
+                        ->markAsRead()
+                        ->button(),
                 ])
                 ->sendToDatabase($recipients);
 

@@ -135,11 +135,13 @@ class PatientForm
                     ->schema([
                         FileUpload::make('consent_form_path')
                             ->label('Archivo de Consentimiento Firmado')
+                            ->openable()
+                                ->panelLayout('grid')
                             ->disk('public') // Usa el "almacén" público que configuramos
                             ->directory('consent_forms') // Guarda los archivos en 'storage/app/public/consent_forms'
                             ->acceptedFileTypes(['application/pdf'])
                             ->maxSize(2048) // Límite de 2MB
-                            ->downloadable() // Permite descargar el archivo una vez subido
+                            ->downloadable()
                             ->helperText('Subir el documento PDF escaneado y firmado por el paciente.')
                             
                             // Lógica de visibilidad:
