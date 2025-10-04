@@ -2,12 +2,15 @@
 
 namespace App\Filament\Resources\Appointments\Tables;
 
+use App\Enums\AppointmentStatus;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Actions\SelectAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Filament\Notifications\Notification;
 
 // Importa estas clases al principio:
 use App\Filament\Resources\Patients\PatientResource;
@@ -63,6 +66,22 @@ class AppointmentsTable
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+                
+                // SelectAction para cambio rápido de estado
+                SelectAction::make('status')
+                    ->label('Cambiar Estado')
+                    ->icon('heroicon-o-arrow-path')
+                    ->options(AppointmentStatus::class)
+                    ->action(function ($record, $data) {
+                        $record->update(['status' => $data['status']]);
+                        
+                        Notification::make()
+                            ->title('Estado actualizado')
+                            ->body("El estado de la cita {$record->ticket_number} ha sido actualizado.")
+                            ->success()
+                            ->send();
+                    }),
+                
                 // --- ACCIÓN PERSONALIZADA ---
                 Action::make('complete_patient_record')
                     ->label('Completar Expediente')
