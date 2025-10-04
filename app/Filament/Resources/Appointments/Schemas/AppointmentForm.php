@@ -63,16 +63,23 @@ class AppointmentForm
                         // El método getBasicPatientFormSchema() ahora maneja automáticamente el contexto
                         PatientForm::getBasicPatientFormSchema()
                     )
-                    ->createOptionUsing(function (array $data) {
+                    ->createOptionUsing(function (array $data,  $get) {
                         // Crear el paciente (esto automáticamente crea un MedicalRecord en el evento created)
-                        $patient = Patient::create([
+                        $patientData = [
                             'full_name' => $data['full_name'],
                             'date_of_birth' => $data['date_of_birth'],
                             'sex' => $data['sex'],
                             'curp' => $data['curp'] ?? null,
                             'contact_phone' => $data['contact_phone'] ?? null,
                             'locality' => $data['locality'] ?? null,
-                        ]);
+                        ];
+                        
+                        // Añadir tutor_id si está presente en los datos
+                        if (isset($data['tutor_id'])) {
+                            $patientData['tutor_id'] = $data['tutor_id'];
+                        }
+                        
+                        $patient = Patient::create($patientData);
 
                         // Actualizar el expediente médico que ya fue creado automáticamente
                         $medicalRecord = $patient->medicalRecord;

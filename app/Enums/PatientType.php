@@ -7,7 +7,7 @@ enum PatientType: string
     case EXTERNAL = 'Externo';
     case EMPLOYEE = 'Empleado';
     case EMPLOYEE_DEPENDENT = 'Hijo de Empleado';
-
+    case PEDIATRIC = 'Pediátrico';
     public static function getOptions(): array
     {
         $options = [];

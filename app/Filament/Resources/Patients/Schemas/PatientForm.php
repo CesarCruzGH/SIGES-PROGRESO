@@ -181,7 +181,32 @@ class PatientForm
                                             ->visible(fn ($get) => $get('patient_type') === PatientType::EMPLOYEE->value),
                                     ])
                                     ->columns(2),
-
+                                // Sección para asignar tutor (solo visible para pacientes pediátricos)
+                                // Esta sección solo se mostrará en el formulario principal, no en el createOptionForm
+                                Section::make('Asignación de Tutor')
+                                    ->schema([
+                                        Select::make('tutor_id')
+                                            ->label('Asignar Tutor')
+                                            ->options(function () {
+                                                return \App\Models\Tutor::pluck('full_name', 'id')->toArray();
+                                            })
+                                            ->searchable()
+                                            ->preload()
+                                            ->createOptionForm([
+                                                TextInput::make('full_name')->label('Nombre Completo')->required(),
+                                                TextInput::make('relationship')->label('Parentesco')->required(),
+                                                TextInput::make('phone_number')->label('Teléfono'),
+                                                Textarea::make('address')->label('Dirección')->columnSpanFull(),
+                                            ])
+                                            ->createOptionUsing(function (array $data) {
+                                                return \App\Models\Tutor::create($data)->id;
+                                            })
+                                            // Configuración simple y directa para asegurar que se guarde correctamente
+                                            ->dehydrated(true)
+                                    ])
+                                    ->visible(fn ($get) => $get('medicalRecord.patient_type') === PatientType::PEDIATRIC->value || $get('patient_type') === PatientType::PEDIATRIC->value)
+                                    ->columns(2),   
+                                             
                                 AdvancedFileUpload::make('medicalRecord.consent_form_path')
                                     ->label('Documento de Consentimiento Informado')
                                     ->disk('public')
@@ -348,6 +373,24 @@ class PatientForm
                                             ->options(EmployeeStatus::getOptions())
                                             ->visible(fn ($get) => $get('patient_type') === PatientType::EMPLOYEE->value),
                                     ])
+                                    ->columns(2),
+                                
+                                // Sección para asignar tutor (solo visible para pacientes pediátricos)
+                                Section::make('Asignación de Tutor')
+                                    ->schema([
+                                        Select::make('tutor_id')
+                                            ->label('Asignar Tutor')
+                                            ->relationship('tutor', 'full_name')
+                                            ->searchable()
+                                            ->preload()
+                                            ->createOptionForm([
+                                                TextInput::make('full_name')->label('Nombre Completo')->required(),
+                                                TextInput::make('relationship')->label('Parentesco')->required(),
+                                                TextInput::make('phone_number')->label('Teléfono'),
+                                                Textarea::make('address')->label('Dirección')->columnSpanFull(),
+                                            ])
+                                    ])
+                                    ->visible(fn ($get) => $get('medicalRecord.patient_type') === PatientType::PEDIATRIC->value || $get('patient_type') === PatientType::PEDIATRIC->value)
                                     ->columns(2),
 
                                 AdvancedFileUpload::make('medicalRecord.consent_form_path')
