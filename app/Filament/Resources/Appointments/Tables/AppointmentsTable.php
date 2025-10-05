@@ -7,6 +7,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Actions\CreateAction;
 use Filament\Actions\SelectAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -19,6 +20,7 @@ class AppointmentsTable
 {
     public static function configure(Table $table): Table
     {
+        
         return $table
             ->heading('Visitas')
             ->description('Control de Visitas')
@@ -97,6 +99,10 @@ class AppointmentsTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->headerActions([
+                CreateAction::make()->label('Crear Nueva Visita'),
+            ])
+            ;
     }
 }
