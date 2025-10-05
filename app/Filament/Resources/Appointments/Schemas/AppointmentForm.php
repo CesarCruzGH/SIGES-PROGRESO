@@ -49,7 +49,15 @@ class AppointmentForm
                             if ($medicalRecord && $medicalRecord->patient) {
                                 $patient = $medicalRecord->patient;
                                 $set('patient_name', $patient->full_name);
-                                $set('patient_age', $patient->age_display);
+                                
+                                // Calcular la edad a partir de date_of_birth
+                                if ($patient->date_of_birth) {
+                                    $age = Carbon::parse($patient->date_of_birth)->age;
+                                    $set('patient_age', $age . ' años');
+                                } else {
+                                    $set('patient_age', 'No disponible');
+                                }
+                                
                                 $set('patient_sex', $patient->sex === 'M' ? 'Masculino' : 'Femenino');
                             }
                         } else {
@@ -110,7 +118,28 @@ class AppointmentForm
                     ])
                     ->columns(3)
                     ->columnSpanFull()
-                    ->visible(fn ( $get) => filled($get('medical_record_id'))),
+                    ->visible(fn ($get, $livewire) => filled($get('medical_record_id')))
+                    // Cargar datos del paciente cuando se está editando un registro existente
+                    ->afterStateHydrated(function ($component, $state, $livewire) {
+                        // Solo ejecutar si estamos en modo edición y hay un medical_record_id
+                        if (isset($livewire->record) && $livewire->record->medical_record_id) {
+                            $medicalRecord = MedicalRecord::with('patient')->find($livewire->record->medical_record_id);
+                            if ($medicalRecord && $medicalRecord->patient) {
+                                $patient = $medicalRecord->patient;
+                                $livewire->data['patient_name'] = $patient->full_name;
+                                
+                                // Calcular la edad a partir de date_of_birth
+                                if ($patient->date_of_birth) {
+                                    $age = Carbon::parse($patient->date_of_birth)->age;
+                                    $livewire->data['patient_age'] = $age . ' años';
+                                } else {
+                                    $livewire->data['patient_age'] = 'No disponible';
+                                }
+                                
+                                $livewire->data['patient_sex'] = $patient->sex === 'M' ? 'Masculino' : 'Femenino';
+                            }
+                        }
+                    }),
 
                 // Campos del formulario de cita
                 TextInput::make('ticket_number')
