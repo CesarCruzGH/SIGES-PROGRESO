@@ -3,8 +3,10 @@
 namespace App\Filament\Resources\Appointments\Pages;
 
 use App\Filament\Resources\Appointments\AppointmentResource;
+use App\Filament\Resources\Patients\Schemas\PatientForm;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Forms\Form;
 
 class ViewAppointment extends ViewRecord
 {
@@ -16,4 +18,5 @@ class ViewAppointment extends ViewRecord
             EditAction::make(),
         ];
     }
+    
 }
