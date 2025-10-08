@@ -18,7 +18,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             // Nuevo campo: rol del usuario (enum)
-            $table->enum('role', ['admin', 'empleado', 'supervisor', 'doctor', 'enfermero', 'recepcionista'])->default('empleado');
+            $table->string('role');
             $table->rememberToken();
             $table->timestamps(); // creado en y modificado en
             $table->softDeletes(); // soft delete (deleted_at)

@@ -5,6 +5,7 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Enums\UserRole;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
@@ -29,12 +30,14 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => Hash::make('password123'), // todas con la misma clave de prueba
             'role' => $this->faker->randomElement([
-                'admin',
-                'empleado',
-                'supervisor',
-                'doctor',
-                'enfermero',
-                'recepcionista',
+                UserRole::ADMIN->value,
+                UserRole::DIRECTOR->value,
+                UserRole::MEDICO_GENERAL->value,
+                UserRole::NUTRICIONISTA->value,
+                UserRole::PSICOLOGO->value,
+                UserRole::FARMACIA->value,
+                UserRole::ENFERMERO->value,
+                UserRole::RECEPCIONISTA->value,
             ]),
             'remember_token' => Str::random(10),
         ];

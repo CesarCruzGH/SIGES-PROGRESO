@@ -59,7 +59,7 @@ class AppointmentResource extends Resource
 
     public static function infolist(Schema $schema): Schema
     {
-        return AppointmentInfolist::configure($schema);
+        return $schema->configure(fn (Schema $schema): Schema => static::infolist($schema));
     }
 
     public static function table(Table $table): Table

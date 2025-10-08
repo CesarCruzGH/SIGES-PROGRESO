@@ -12,8 +12,8 @@ use App\Filament\Resources\Appointments\AppointmentResource; // <-- Importar App
 class EditPatient extends EditRecord
 {
     protected static string $resource = PatientResource::class;
-    // --- NUEVA PROPIEDAD PARA GUARDAR LA "ETIQUETA" ---
-    public ?int $appointment_id = null;
+    // Propiedad para guardar el ID de la visita a la que redirigir
+    public ?int $redirectToAppointmentId = null;
 
     protected static ?string $maxWidth = 'full';
 
@@ -29,9 +29,9 @@ class EditPatient extends EditRecord
     {
         parent::mount($record);
 
-        // Si la URL tiene el parámetro ?appointment_id=..., lo guardamos.
-        if (request()->has('appointment_id')) {
-            $this->appointment_id = (int) request()->get('appointment_id');
+        // Si la URL tiene el parámetro redirect_to_appointment, lo guardamos
+        if (request()->has('redirect_to_appointment')) {
+            $this->redirectToAppointmentId = (int) request()->get('redirect_to_appointment');
         }
     }
 
@@ -60,13 +60,13 @@ class EditPatient extends EditRecord
      */
     protected function getRedirectUrl(): string
     {
-        // Si tenemos un ID de visita "etiquetado"...
-        if ($this->appointment_id) {
-            // ...construimos la URL para la página de edición de esa visita.
-            return AppointmentResource::getUrl('edit', ['record' => $this->appointment_id]);
+        // Si tenemos un ID de visita para redirección
+        if ($this->redirectToAppointmentId) {
+            // Redirigimos a la página de vista de la visita
+            return AppointmentResource::getUrl('view', ['record' => $this->redirectToAppointmentId]);
         }
 
-        // Si no, hacemos lo de siempre: volver a la lista de pacientes.
+        // Si no, hacemos lo de siempre: volver a la lista de pacientes
         return $this->getResource()::getUrl('index');
     }
 

@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-
+use App\Enums\UserRole;
 class CoreDataSeeder extends Seeder
 {
     /**
@@ -19,7 +19,7 @@ class CoreDataSeeder extends Seeder
             [
                 'name' => 'Administrador',
                 'password' => Hash::make('password'),
-                'role' => 'admin',
+                'role' => UserRole::ADMIN,
             ]
         );
 
@@ -29,7 +29,7 @@ class CoreDataSeeder extends Seeder
             [
                 'name' => 'Sistema de Turnos API',
                 'password' => Hash::make(str()->random(20)), // Contraseña aleatoria, no la usaremos
-                'role' => 'admin', // O un rol específico 'api' si lo creas
+                'role' => UserRole::ADMIN, // O un rol específico 'api' si lo creas
             ]
         );
 
