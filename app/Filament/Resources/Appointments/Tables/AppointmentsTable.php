@@ -278,12 +278,9 @@ class AppointmentsTable
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                Filter::make('proximas')
-                    ->label('Próximas')
-                    ->default()
-                    ->query(fn (Builder $query) => $query->whereIn('status', [AppointmentStatus::PENDING, AppointmentStatus::IN_PROGRESS])->whereDate('created_at', '>=', now())),
                 Filter::make('hoy')
                     ->label('Hoy')
+                    ->default(true)
                     ->query(fn (Builder $query) => $query->whereDate('created_at', now())),
                 Filter::make('completadas')
                     ->label('Completadas')

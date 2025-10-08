@@ -54,7 +54,7 @@ class UsersTable
                                 'gray' => static fn ($state): bool => in_array($state, [UserRole::FARMACIA, UserRole::RECEPCIONISTA]),
                                 'primary' => static fn ($state): bool => $state === UserRole::ENFERMERO,
                             ]),
-                            
+                         /*   
                         IconColumn::make('email_verified_at')
                             ->label('Verificado')
                             ->boolean()
@@ -63,7 +63,9 @@ class UsersTable
                             ->trueColor('success')
                             ->falseColor('danger')
                             ->alignCenter(),
+                            */
                     ])->alignEnd(),
+                    
                 ]),
             ])
             ->filters([
