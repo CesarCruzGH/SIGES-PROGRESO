@@ -25,7 +25,7 @@ class NewVisitRegistered extends Notification
             'title' => 'Nueva Visita Registrada',
             'body' => "Se ha registrado una nueva visita con ticket #{$this->appointment->ticket_number}",
             'icon' => 'heroicon-o-ticket',
-            'url' => AppointmentResource::getUrl('edit', ['record' => $this->appointment]),
+            'url' => AppointmentResource::getUrl('view', ['record' => $this->appointment]),
         ];
     }
 }

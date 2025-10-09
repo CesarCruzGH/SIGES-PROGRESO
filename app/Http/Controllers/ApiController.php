@@ -109,7 +109,7 @@ class ApiController extends Controller
                     // Usamos el alias que definimos arriba
                     Action::make('view')
                         ->label('Ver Visita')
-                        ->url(AppointmentResource::getUrl('edit', ['record' => $appointment]))
+                        ->url(AppointmentResource::getUrl('view', ['record' => $appointment]))
                         ->markAsRead()
                         ->button(),
                 ])

@@ -18,4 +18,10 @@ class EditAppointment extends EditRecord
             DeleteAction::make(),
         ];
     }
+            public function getTitle(): string
+    {
+        // La variable $this->record contiene la visita que se está viendo.
+        // Construimos un título más descriptivo.
+        return "Editar detalles de la Visita #{$this->getRecord()->ticket_number}";
+    }
 }

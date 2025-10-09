@@ -18,6 +18,9 @@ class ViewAppointment extends ViewRecord
     {
         return [
             EditAction::make()
+                ->label('Editar Visita')
+                ->color('primary')
+                ->icon('heroicon-o-pencil')
                 ->visible(fn () => $this->record->medicalRecord->patient->status === 'active'),
                 
             Action::make('complete_patient_record')
@@ -30,5 +33,11 @@ class ViewAppointment extends ViewRecord
                     'redirect_to_appointment' => $this->record->id,
                 ])),
         ];
+    }
+        public function getTitle(): string
+    {
+        // La variable $this->record contiene la visita que se está viendo.
+        // Construimos un título más descriptivo.
+        return "Detalles de la Visita #{$this->getRecord()->ticket_number}";
     }
 }

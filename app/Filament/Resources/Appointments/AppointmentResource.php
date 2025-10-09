@@ -27,7 +27,7 @@ class AppointmentResource extends Resource
 
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-calendar-days';
-    protected static ?string $recordTitleAttribute = 'ticket_number';
+    protected static ?string $recordTitleAttribute = 'ticket_number'; //paciente nombre o numero de ticket
     protected static ?string $navigationLabel = 'Visitas';
     protected static ?string $modelLabel = 'Visita';
     protected static ?string $pluralModelLabel = 'Visitas';
@@ -83,6 +83,5 @@ class AppointmentResource extends Resource
             'edit' => EditAppointment::route('/{record}/edit'),
         ];
     }
-
     // Las pestañas se definen en la página ListAppointments
 }
