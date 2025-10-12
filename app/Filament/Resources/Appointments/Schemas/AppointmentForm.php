@@ -24,6 +24,7 @@ class AppointmentForm
     {
         return $schema
             ->columns(2)
+            
             ->components([
                 // Campo principal: Selección de Expediente Médico
                 Select::make('medical_record_id')

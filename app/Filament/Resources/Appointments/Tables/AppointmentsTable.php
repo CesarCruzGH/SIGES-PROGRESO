@@ -274,7 +274,7 @@ class AppointmentsTable
                 ]),
             ])
             ->headerActions([
-                CreateAction::make()->label('Crear Nueva Visita'),
+                CreateAction::make()->label('Crear Nueva Visita')->tooltip('Crear una nueva visita'),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([

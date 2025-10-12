@@ -1,66 +1,137 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SIGES-PROGRESO — Documentación Técnica de Resources en Filament
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Este documento describe cómo está organizada la interfaz administrativa del proyecto usando Filament (Forms, Tables e Infolists), las interacciones entre los Resources, y las pautas para extender y mantener la solución.
 
-## About Laravel
+## Índice
+- Introducción y stack
+- Arquitectura de Filament
+- Resources y componentes
+- Pacientes
+- Visitas (Citas)
+- Servicios
+- Usuarios
+- Estados y colores
+- Navegación y páginas
+- Reutilización de esquemas
+- Interacciones clave entre Resources
+- Notificaciones
+- Extensión y buenas prácticas
+- Comandos útiles
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Introducción y stack
+- Framework: `Laravel`
+- Admin UI: `Filament`
+- Frontend tooling: `Vite`, `Tailwind`
+- Base de datos: según tu `.env` local
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Objetivo: digitalizar y administrar expedientes médicos, pacientes y visitas, con una UI consistente y reutilizable.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Arquitectura de Filament
+Cada Resource define tres piezas principales:
+- `Form`: para crear/editar registros, con secciones y lógica reactiva.
+- `Infolist`: para mostrar registros en modo lectura, alineado visualmente con el `Form`.
+- `Table`: para listar registros con columnas, filtros y acciones.
 
-## Learning Laravel
+Además, cada Resource expone sus `Pages` para listar, ver y editar.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Resources y componentes
+Estructura relevante del proyecto:
+- `app/Filament/Resources/Patients/PatientResource.php`
+  - Schemas: `app/Filament/Resources/Patients/Schemas/PatientForm.php`, `PatientInfolist.php`
+  - Tables: `app/Filament/Resources/Patients/Tables/PatientsTable.php`
+  - Pages: `ListPatients.php`, `ViewPatient.php`, `EditPatient.php`
+- `app/Filament/Resources/Appointments/AppointmentResource.php`
+  - Schemas: `app/Filament/Resources/Appointments/Schemas/AppointmentForm.php`
+  - Tables: `app/Filament/Resources/Appointments/Tables/AppointmentsTable.php`
+  - Pages: `ListAppointments.php`, `ViewAppointment.php`, `EditAppointment.php`
+- `app/Filament/Resources/Services/ServiceResource.php`
+  - Tables/Schemas/Páginas según la entidad Servicios
+- `app/Filament/Resources/Users/UsersTable.php` (listado de usuarios)
+- Enums para estados y etiquetas: `app/Enums/*` (`PatientType`, `AppointmentStatus`, `VisitType`, `Shift`, etc.)
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Pacientes
+- Modelo: `App\Models\Patient`
+- `Form`: define secciones (p. ej., información personal, contacto, expediente, tutor, discapacidad). Vive en `Patients/Schemas/PatientForm.php`.
+- `Infolist`: replica el layout del `Form` para lectura en `Patients/Schemas/PatientInfolist.php`.
+- `Table`: columnas, búsqueda y acciones en `Patients/Tables/PatientsTable.php`.
+- `Pages`:
+  - `ListPatients.php`: listado con filtros/acciones.
+  - `ViewPatient.php`: vista detallada; título dinámico y acciones (p. ej. registrar somatometría).
+  - `EditPatient.php`: edición del paciente.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Detalles prácticos:
+- Columna `sex` en `PatientsTable.php` mapea `F/M` a `Femenino/Masculino` con `formatStateUsing` y colorea la badge con tokens compatibles de Filament.
+- Para mantener consistencia visual, en `PatientResource::infolist` se delega a `PatientInfolist` para que el `View` sea idéntico al `Form` (orden de secciones, etiquetas y visibilidad condicional).
 
-## Laravel Sponsors
+## Visitas (Citas)
+- Modelo: `App\Models\Appointment`
+- `Form`: `Appointments/Schemas/AppointmentForm.php` configura selección/creación de expediente, paciente y servicio, horarios, tipo de visita, etc.
+- `Table`: `Appointments/Tables/AppointmentsTable.php` lista citas con filtros por fecha/estado y acciones.
+- `Pages`: `ListAppointments.php`, `ViewAppointment.php`, `EditAppointment.php`.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Patrones útiles:
+- Uso de `Enums` para estados (`AppointmentStatus`, `VisitType`, `Shift`) facilita colorear badges y estandarizar etiquetas.
+- Formularios con dependencias (p. ej. al seleccionar `Patient`, se precargan datos relacionados del `MedicalRecord`).
 
-### Premium Partners
+## Servicios
+- Modelo: `App\Models\Service`
+- Resource: `ServiceResource.php` con sus páginas, tablas y formularios.
+- Recomendado asignar colores y categorías usando `Enums` si aplica.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+## Usuarios
+- Modelo: `App\Models\User`
+- Listado: `UsersTable.php` con columnas básicas y acciones administrativas.
 
-## Contributing
+## Estados y colores
+- Filament usa tokens de color: `primary`, `success`, `warning`, `danger`, `info`, `gray`.
+- Ejemplo de mapeo (sin afectar valores en BD):
+  - `sex`: `F/Femenino` → `warning`, `M/Masculino` → `primary`.
+  - Usa callbacks que normalicen el estado (`strtolower`, `trim`) para evitar caer en `gray` por mayúsculas/espacios.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Navegación y páginas
+- Cada Resource registra sus `Pages` estándar: `List`, `View`, `Edit`.
+- En `ViewPatient.php` se personaliza el título con `getTitle()` y se agregan acciones (p. ej. `addSomatometricReading`) con formularios inline.
+- Las acciones pueden notificar (`Filament\Notifications\Notification`) y crear registros relacionados (`somatometricReadings()` del modelo).
 
-## Code of Conduct
+## Reutilización de esquemas
+- `Form` y `Infolist` se definen en `Schemas/*` y se reutilizan en `PatientResource::form` y `PatientResource::infolist`.
+- Buen patrón: delegar directamente a la clase de esquema, por ejemplo:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```php
+// En PatientResource.php
+public static function infolist(\Filament\Infolists\Infolist $schema): \Filament\Infolists\Infolist
+{
+    return \App\Filament\Resources\Patients\Schemas\PatientInfolist::configure($schema);
+}
+```
 
-## Security Vulnerabilities
+Así el `View` queda idéntico al `Form` y se centraliza el mantenimiento.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Interacciones clave entre Resources
+- Paciente ↔ Expediente médico ↔ Visitas: la cita puede vincularse a un expediente y a un servicio.
+- Navegación cruzada: desde tablas y vistas se puede saltar a registros relacionados mediante acciones o enlaces.
+- Estados y filtros consistentes: los `Enums` garantizan etiquetas y colores uniformes en formularios, infolists y tablas.
 
-## License
+## Notificaciones
+- `App\Notifications\NewVisitRegistered` envía avisos cuando se registra una nueva visita.
+- Las acciones de página (`Action::make(...)`) pueden disparar `Notification::make()->success()->send()` para feedback inmediato.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Extensión y buenas prácticas
+- Reutiliza esquemas (`Schemas/*`) para evitar duplicación.
+- Normaliza estados con `formatStateUsing` y `color()` en columnas.
+- Usa `Enums` para etiquetas y mapeos; colorea con tokens de Filament.
+- Mantén `Pages` enfocadas: `List` para filtros/acciones masivas, `View` para lectura fiel al `Form`, `Edit` para cambios.
+- Al agregar nuevas entidades, replica el patrón: `Resource`, `Schemas/Form`, `Schemas/Infolist`, `Tables`, `Pages`.
+- Limpia cachés si no ves cambios en UI: `php artisan optimize:clear`.
+
+## Comandos útiles
+- Instalar dependencias frontend: `npm install`
+- Ejecutar build dev: `npm run dev`
+- Enlazar almacenamiento: `php artisan storage:link`
+- Migrar y seed: `php artisan migrate --seed`
+- Limpiar cachés: `php artisan optimize:clear`
+- Servidor de desarrollo: `php artisan serve`
+
+---
+
+Si necesitas que el `View Patient` sea idéntico al `Form`, asegúrate de que `PatientInfolist` refleje las mismas secciones y que `PatientResource::infolist` delegue a esa clase. Para el campo `sex`, mantén el mapeo `F/M` → `Femenino/Masculino` con colors de Filament y normalización del estado para una visualización robusta.

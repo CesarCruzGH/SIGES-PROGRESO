@@ -48,12 +48,22 @@ class Appointment extends Model
      */
     public static function generateWalkInTicket(): string
     {
-        $today = now()->format('Y-m-d');
-        $count = self::where('ticket_number', 'like', 'LOCAL-' . now()->format('Y') . '-%')
-                    ->whereDate('created_at', $today)
-                    ->count() + 1;
-        
-        return 'LOCAL-' . now()->format('Y') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+        $year = now()->format('Y');
+        $prefix = 'LOCAL-' . $year . '-';
+
+        // Obtiene el último ticket del año y calcula el siguiente correlativo
+        $lastTicket = self::where('ticket_number', 'like', $prefix . '%')
+            ->orderBy('ticket_number', 'desc')
+            ->value('ticket_number');
+
+        $nextNumber = 1;
+        if (! empty($lastTicket)) {
+            $parts = explode('-', $lastTicket);
+            $lastNumber = (int) ($parts[count($parts) - 1] ?? 0);
+            $nextNumber = $lastNumber + 1;
+        }
+
+        return $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
 
     /**

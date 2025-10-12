@@ -42,7 +42,7 @@ class PatientResource extends Resource
 
     public static function infolist(Schema $schema): Schema
     {
-        return PatientInfolist::configure($schema);
+        return $schema->configure(fn (Schema $schema): Schema => static::infolist($schema));
     }
 
     public static function table(Table $table): Table
@@ -62,10 +62,8 @@ class PatientResource extends Resource
         return [
             'index' => ListPatients::route('/'),
             'create' => CreatePatient::route('/create'),
-            //'view' => ViewPatient::route('/{record}'),
+            'view' => ViewPatient::route('/{record}'),
             'edit' => EditPatient::route('/{record}/edit'),
-            'view' => ViewPatient::route('/{record}'), // Necesario para el ViewAction
-
         ];
     }
     public static function getNavigationBadge(): ?string

@@ -20,12 +20,11 @@ class ViewPatient extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            EditAction::make(),
+            EditAction::make()->label('Editar Paciente')->icon('heroicon-o-pencil')->tooltip('Editar información del paciente'),
             Action::make('addSomatometricReading')
                 ->label('Registrar Somatometría')
                 ->icon('heroicon-o-heart')
-                // 🔐 Restricción de acceso solo para enfermeros
-                //->visible(fn () => Auth::user() && Auth::user()->role === 'enfermero')
+                ->tooltip('Registrar somatometría del paciente')
                 ->schema([
                     ComponentsFieldset::make('Presión Arterial')
                         ->schema([
@@ -60,5 +59,11 @@ class ViewPatient extends ViewRecord
                         ->send();
                 }),
         ];
+    }
+    public function getTitle(): string
+    {
+        // La variable $this->record contiene la visita que se está viendo.
+        // Construimos un título más descriptivo.
+        return "Detalles de {$this->getRecord()->full_name}";
     }
 }

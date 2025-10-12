@@ -35,6 +35,8 @@ class DashboardPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::hex('#f4b857'),
                 'icon' => Color::hex('#92d4ee'),
+                'pink' => Color::hex('#F7CFD8'),
+                'indigo' => Color::hex('#687FE5'),
             
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')

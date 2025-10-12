@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateTutorsTable extends Migration
 {
+    
     public function up()
     {
         Schema::create('tutors', function (Blueprint $table) {
