@@ -36,111 +36,41 @@ class AppointmentsTable
             ->heading('Visitas')
             ->description('Control de Visitas')
             ->poll('10s')
-            ->contentGrid([
-                'md' => 2,
-                'xl' => 3,
-            ])
             ->columns([
-                Split::make([
-                    Stack::make([
-                        TextColumn::make('ticket_number')
-                            ->label('Ticket')
-                            ->searchable()
-                            ->weight('bold')
-                            ->size('lg')
-                            ->color('primary'),
-                            
-                        TextColumn::make('medicalRecord.record_number')
-                            ->label('Expediente')
-                            ->searchable()
-                            ->sortable()
-                            ->color('gray')
-                            ->size('sm'),
-                    ])->grow(false),
-                    
-                    Stack::make([
-                        Split::make([
-                            TextColumn::make('medicalRecord.patient.full_name')
-                                ->label('Paciente')
-                                ->searchable()
-                                ->size('lg')
-                                ->weight('bold')
-                                ->default(fn ($record) => 'Expediente Pendiente')
-                                ->weight('medium')
-                                ->description(fn ($record) => $record->medicalRecord->patient->status === 'pending_review' 
-                                    ? 'Requiere completar datos' 
-                                    : null)
-                                ->color(fn ($record) => $record->medicalRecord->patient->status === 'pending_review' 
-                                    ? 'warning' 
-                                    : 'gray'),
-                        ]),
-                        
-                        Split::make([
-                            IconColumn::make('service.name')                              
-                                ->icon(fn (string $state): Heroicon => match($state) {
-                                    'Medicina General' => Heroicon::OutlinedHeart,
-                                    'Pediatría' => Heroicon::OutlinedFaceSmile,
-                                    'Urgencias' => Heroicon::OutlinedExclamationTriangle,
-                                    default => Heroicon::OutlinedClipboardDocumentList,
-                                })
-                                ->color(fn (string $state): string => match($state) {
-                                    'Urgencias' => 'danger',
-                                    default => 'primary',
-                                })
-                                ->grow(false),
-                                
-                            TextColumn::make('service.name')
-                                ->label('Servicio')
-                                ->sortable()
-                                ->searchable(),
-                        ]),
-                    ]),
-                ])->from('md'),
                 
-                Split::make([
-                   /* Stack::make([
-                        TextColumn::make('appointment_date')
-                            ->label('Fecha')
-                            ->date('d/m/Y')
-                            ->sortable(),
-                            
-                        TextColumn::make('appointment_time')
-                            ->label('Hora')
-                            ->time('H:i')
-                            ->sortable()
-                            ->color('primary'),
-                    ]),
-                    */
-                    Stack::make([
-                        Split::make([
-                            IconColumn::make('doctor.name')
-                                ->label('')
-                                ->icon(fn (string $state): Heroicon => Heroicon::OutlinedUserCircle)
-                                ->color('success')
-                                ->grow(false),
-                                
-                            TextColumn::make('doctor.name')
-                                ->label('Médico')
-                                ->searchable()
-                                ->sortable()
-                                ->default('Sin asignar')
-                                ,
-                        ]),
-                        
-                        Split::make([
-                            IconColumn::make('clinic_room_number')
-                                ->label('')
-                                ->icon(fn (string $state): Heroicon => Heroicon::OutlinedBuildingOffice2)
-                                ->color('primary')
-                                ->grow(false),
-                            TextColumn::make('clinic_room_number')
-                                ->label('Consultorio')
-                                ->prefix('Consultorio: ')
-                                ->searchable(),
-                        ]),
-                    ]),
-                ])->from('md'),
-                
+                TextColumn::make('medicalRecord.patient.full_name')
+                    ->label('Paciente')
+                    ->searchable()
+                    ->size('lg')
+                    ->weight('bold')
+                    ->tooltip(fn ($record): string => $record->reason_for_visit)
+                    ->description(fn ($record): ?string => $record->ticket_number ?? null),
+
+                TextColumn::make('medicalRecord.record_number')
+                    ->label('Expediente')
+                    ->searchable()
+                    ->sortable()
+                    ->color('gray')
+                    ->size('sm'),
+
+                TextColumn::make('service.name')
+                    ->label('Servicio')
+                    ->sortable()
+                    ->searchable(),
+
+                TextColumn::make('doctor.name')
+                    ->label('Médico')
+                    ->searchable()
+                    ->sortable()
+                    ->default('Sin asignar'),
+
+                TextColumn::make('clinic_room_number')
+                    ->label('Consultorio')
+                    ->prefix('Consultorio: ')
+                    ->searchable()
+                    ->placeholder('Sin asignar')
+                    ->weight(fn (?string $state): string => is_null($state) ? 'bold' : 'normal')
+                    ->color(fn (?string $state): string => is_null($state) ? 'gray' : 'indigo'),
                 TextColumn::make('status')
                     ->label('Estado')
                     ->formatStateUsing(fn ($state) => match ($state->value ?? $state) {
@@ -212,22 +142,8 @@ class AppointmentsTable
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make(),
-                    EditAction::make(),
-                    
-                    SelectAction::make('status')
-                        ->label('Cambiar Estado')
-                        ->icon('heroicon-o-arrow-path')
-                        ->options(AppointmentStatus::class)
-                        ->action(function ($record, $data) {
-                            $record->update(['status' => $data['status']]);
-                            
-                            Notification::make()
-                                ->title('Estado actualizado')
-                                ->body("El estado de la cita {$record->ticket_number} ha sido actualizado.")
-                                ->success()
-                                ->send();
-                        }),
-                    
+                    EditAction::make()->visible(fn ($record) => $record->medicalRecord->patient->status === 'active')
+                    ,                   
                     Action::make('complete_patient_record')
                         ->label('Completar Expediente')
                         ->icon('heroicon-o-identification')

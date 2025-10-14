@@ -23,8 +23,7 @@ class AppointmentForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
-            ->columns(2)
-            
+            ->columns(2)           
             ->components([
                 // Campo principal: Selección de Expediente Médico
                 Select::make('medical_record_id')
