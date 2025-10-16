@@ -143,7 +143,8 @@ class AppointmentsTable
                 ActionGroup::make([
                     ViewAction::make(),
                     EditAction::make()->visible(fn ($record) => $record->medicalRecord->patient->status === 'active')
-                    ,                   
+                    ,   
+                                    
                     Action::make('complete_patient_record')
                         ->label('Completar Expediente')
                         ->icon('heroicon-o-identification')

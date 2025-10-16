@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Appointments\Schemas;
 
 use App\Enums\AppointmentStatus;
+use App\Enums\VisitType;
 use App\Filament\Resources\Patients\Schemas\PatientForm;
 use App\Models\MedicalRecord;
 use App\Models\Patient;
@@ -152,6 +153,11 @@ class AppointmentForm
                     ->relationship('service', 'name')
                     ->searchable()
                     ->preload()
+                    ->required(),
+                Select::make('visit_type')
+                    ->label('Tipo de Visita')
+                    ->options(VisitType::class)
+                    ->default(VisitType::PRIMERA_VEZ)
                     ->required(),
 
                 Select::make('doctor_id')

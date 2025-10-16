@@ -58,6 +58,13 @@ class MedicalRecord extends Model
     {
         return $this->hasMany(SomatometricReading::class);
     }
+
+    public function nursingAssessment() {
+    return $this->hasOne(NursingAssessment::class);
+    }
+    public function medicalDocuments() {
+        return $this->hasMany(MedicalDocument::class);
+    }
 }
 
 
