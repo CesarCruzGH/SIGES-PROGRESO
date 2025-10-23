@@ -28,18 +28,48 @@ class ViewPatient extends ViewRecord
                 ->schema([
                     ComponentsFieldset::make('Presión Arterial')
                         ->schema([
-                            TextInput::make('blood_pressure_systolic')->label('Sistólica')->numeric(),
-                            TextInput::make('blood_pressure_diastolic')->label('Diastólica')->numeric(),
+                            TextInput::make('blood_pressure_systolic')
+                                ->label('Sistólica')
+                                ->numeric()
+                                ->minValue(0)
+                                ->maxValue(300)
+                                ->integer(),
+                            TextInput::make('blood_pressure_diastolic')
+                                ->label('Diastólica')
+                                ->numeric()
+                                ->minValue(0)
+                                ->maxValue(200)
+                                ->integer(),
                         ])->columns(2),
                     ComponentsFieldset::make('Signos Vitales')
                         ->schema([
-                            TextInput::make('heart_rate')->label('Frecuencia Cardíaca (ppm)')->numeric(),
-                            TextInput::make('temperature')->label('Temperatura (°C)')->numeric(),
+                            TextInput::make('heart_rate')
+                                ->label('Frecuencia Cardíaca (ppm)')
+                                ->numeric()
+                                ->minValue(0)
+                                ->maxValue(300)
+                                ->integer(),
+                            TextInput::make('temperature')
+                                ->label('Temperatura (°C)')
+                                ->numeric()
+                                ->minValue(30)
+                                ->maxValue(45)
+                                ->step(0.1),
                         ])->columns(2),
                     ComponentsFieldset::make('Medidas Corporales')
                         ->schema([
-                            TextInput::make('weight')->label('Peso (kg)')->numeric(),
-                            TextInput::make('height')->label('Altura (m)')->numeric(),
+                            TextInput::make('weight')
+                                ->label('Peso (kg)')
+                                ->numeric()
+                                ->minValue(0)
+                                ->maxValue(500)
+                                ->step(0.01),
+                            TextInput::make('height')
+                                ->label('Altura (m)')
+                                ->numeric()
+                                ->minValue(0)
+                                ->maxValue(3)
+                                ->step(0.01),
                         ])->columns(2),
                     Textarea::make('observations')->label('Observaciones')->columnSpanFull(),
                 ])

@@ -9,13 +9,17 @@ class SomatometricReading extends Model
 {
     protected $fillable = [
         'medical_record_id',
+        'appointment_id',
         'user_id',
         'blood_pressure_systolic',
         'blood_pressure_diastolic',
         'heart_rate',
+        'respiratory_rate',
         'temperature',
         'weight',
         'height',
+        'blood_glucose',
+        'oxygen_saturation',
         'observations',
     ];
 
@@ -33,6 +37,11 @@ class SomatometricReading extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function appointment(): BelongsTo
+    {
+        return $this->belongsTo(Appointment::class);
     }
 
 }

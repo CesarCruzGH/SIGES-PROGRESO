@@ -3,7 +3,11 @@
 namespace App\Filament\Resources\Appointments\Tables;
 
 use App\Enums\AppointmentStatus;
+use App\Enums\VisitType;
 use App\Filament\Resources\Patients\PatientResource;
+use App\Filament\Resources\MedicalRecords\RelationManagers\SomatometricReadingsRelationManager;
+use App\Models\NursingAssessment;
+use App\Models\SomatometricReading;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
@@ -13,6 +17,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\SelectAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 //use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\BadgeColumn;
@@ -28,6 +33,7 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\Auth;
 class AppointmentsTable
 {
     public static function configure(Table $table): Table
@@ -151,6 +157,62 @@ class AppointmentsTable
                         ->color('warning')
                         ->visible(fn ($record) => $record->medicalRecord->patient->status === 'pending_review')
                         ->url(fn ($record): string => PatientResource::getUrl('edit', ['record' => $record->medicalRecord->patient,'appointment_id' => $record->id])),
+
+                    // Hoja Inicial (Valoración de Enfermería)
+                    Action::make('fill_initial_sheet')
+                        ->label('Registrar Hoja Inicial')
+                        ->icon('heroicon-o-document-plus')
+                        ->visible(function ($record) {
+                            // Verificar si es primera vez Y si NO existe una valoración inicial
+                            $hasAssessment = NursingAssessment::where('medical_record_id', $record->medical_record_id)->exists();
+                            return $record->visit_type === VisitType::PRIMERA_VEZ->value && !$hasAssessment;
+                        })
+                        ->form(function ($record) {
+                            // Buscar valoración existente para prellenar el formulario
+                            $assessment = NursingAssessment::where('medical_record_id', $record->medical_record_id)->first();
+                            
+                            return [
+                                Textarea::make('allergies')
+                                    ->label('Alergias')
+                                    ->rows(3)
+                                    ->default($assessment->allergies ?? null),
+                                Textarea::make('personal_pathological_history')
+                                    ->label('Antecedentes personales patológicos')
+                                    ->rows(3)
+                                    ->default($assessment->personal_pathological_history ?? null),
+                            ];
+                        })
+                        ->action(function ($record, array $data) {
+                            // Actualizar o crear la valoración
+                            NursingAssessment::updateOrCreate(
+                                ['medical_record_id' => $record->medical_record_id],
+                                [
+                                    'user_id' => Auth::id(),
+                                    'allergies' => $data['allergies'] ?? null,
+                                    'personal_pathological_history' => $data['personal_pathological_history'] ?? null,
+                                ]
+                            );
+                            
+                            Notification::make()
+                                ->title('Hoja Inicial guardada')
+                                ->success()
+                                ->send();
+                        }),
+
+                    // Hoja Diaria (Somatometría)
+                    Action::make('register_somatometrics')
+                        ->label('Registrar Hoja Diaria')
+                        ->icon('heroicon-o-heart')
+                        ->visible(fn ($record) => !(($record->visit_type === VisitType::PRIMERA_VEZ->value)
+                            && empty($record->medicalRecord->nursingAssessment)))
+                        ->schema(SomatometricReadingsRelationManager::getFormSchema())
+                        ->action(function ($record, array $data) {
+                            SomatometricReading::create(array_merge($data, [
+                                'medical_record_id' => $record->medical_record_id,
+                                'appointment_id' => $record->id,
+                                'user_id' => Auth::id(),
+                            ]));
+                        }),
                         
                     Action::make('confirm_attendance')
                         ->label('Confirmar Asistencia')

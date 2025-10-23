@@ -17,14 +17,16 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
 use App\Filament\Resources\MedicalRecords\RelationManagers\AppointmentsRelationManager;
+use App\Filament\Resources\MedicalRecords\RelationManagers\MedicalDocumentsRelationManager;
 use App\Filament\Resources\MedicalRecords\RelationManagers\MedicalLeavesRelationManager;
 use App\Filament\Resources\MedicalRecords\RelationManagers\SomatometricReadingsRelationManager;
+use App\Filament\Resources\MedicalRecords\RelationManagers\NursingAssessmentRelationManager;
 
 class MedicalRecordResource extends Resource
 {
     protected static ?string $model = MedicalRecord::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-folder';
     protected static ?string $recordTitleAttribute = 'record_number';
     protected static ?string $navigationLabel = 'Expedientes';
     protected static ?string $modelLabel = 'Expediente';
@@ -51,6 +53,8 @@ class MedicalRecordResource extends Resource
             AppointmentsRelationManager::class,
             MedicalLeavesRelationManager::class,
             SomatometricReadingsRelationManager::class,
+            MedicalDocumentsRelationManager::class,
+            NursingAssessmentRelationManager::class,
         ];
     }
 

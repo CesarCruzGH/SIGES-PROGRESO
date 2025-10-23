@@ -20,7 +20,7 @@ class ServiceResource extends Resource
 {
     protected static ?string $model = Service::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-briefcase';   
 
     protected static ?string $recordTitleAttribute = 'name';
     protected static ?string $navigationLabel = 'Servicios';
