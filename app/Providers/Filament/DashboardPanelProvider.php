@@ -19,6 +19,10 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use App\Filament\Widgets\VisitasSemanalesChart;
+use App\Filament\Widgets\ServiciosMasSolicitadosChart;
+use App\Filament\Widgets\EstadoVisitasChart;
+use App\Filament\Widgets\TiposDePacienteChart;
 
 class DashboardPanelProvider extends PanelProvider
 {
@@ -46,6 +50,10 @@ class DashboardPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
+                VisitasSemanalesChart::class, //primer widget 
+                ServiciosMasSolicitadosChart::class,
+                EstadoVisitasChart::class,
+                TiposDePacienteChart::class,
                 AccountWidget::class,
                 FilamentInfoWidget::class,
                 ClinicStatusWidget::class,
