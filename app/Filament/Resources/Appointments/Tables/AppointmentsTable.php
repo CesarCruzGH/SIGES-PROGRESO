@@ -70,13 +70,18 @@ class AppointmentsTable
                     ->sortable()
                     ->default('Sin asignar'),
 
-                TextColumn::make('clinic_room_number')
+                TextColumn::make('clinicSchedule.clinic_name')
                     ->label('Consultorio')
                     ->prefix('Consultorio: ')
                     ->searchable()
                     ->placeholder('Sin asignar')
                     ->weight(fn (?string $state): string => is_null($state) ? 'bold' : 'normal')
                     ->color(fn (?string $state): string => is_null($state) ? 'gray' : 'indigo'),
+
+                TextColumn::make('date')
+                    ->label('Fecha')
+                    ->date('d/m/Y')
+                    ->sortable(),
                 TextColumn::make('status')
                     ->label('Estado')
                     ->formatStateUsing(fn ($state) => match ($state->value ?? $state) {

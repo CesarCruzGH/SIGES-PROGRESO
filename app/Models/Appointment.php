@@ -7,6 +7,7 @@ use App\Enums\AppointmentStatus; // <-- Importar el nuevo Enum
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\DB;
+use App\Models\ClinicSchedule;
 
 class Appointment extends Model
 {
@@ -19,7 +20,9 @@ class Appointment extends Model
         'ticket_number',
         'shift',
         'visit_type',
-        'clinic_room_number',
+        // eliminado: 'clinic_room_number'
+        'clinic_schedule_id',
+        'date',
         'reason_for_visit',
         'notes',
         'status',
@@ -28,6 +31,7 @@ class Appointment extends Model
     protected $casts = [
         // Conectamos el campo 'status' a nuestro Enum
         'status' => AppointmentStatus::class,
+        'date' => 'date',
     ];
 
     /**
@@ -39,6 +43,22 @@ class Appointment extends Model
             // Si no se proporciona ticket_number, generar uno local (walk-in)
             if (empty($appointment->ticket_number)) {
                 $appointment->ticket_number = self::generateWalkInTicket();
+            }
+
+            // Completar service_id, doctor_id y date desde el horario diario si falta alguno
+            if ($appointment->clinic_schedule_id) {
+                $schedule = ClinicSchedule::find($appointment->clinic_schedule_id);
+                if ($schedule) {
+                    if (empty($appointment->service_id)) {
+                        $appointment->service_id = $schedule->service_id;
+                    }
+                    if (empty($appointment->doctor_id)) {
+                        $appointment->doctor_id = $schedule->user_id;
+                    }
+                    if (empty($appointment->date)) {
+                        $appointment->date = $schedule->date;
+                    }
+                }
             }
         });
     }
@@ -96,5 +116,13 @@ class Appointment extends Model
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    /**
+     * Relación: Una cita pertenece a un Horario Diario activo.
+     */
+    public function clinicSchedule(): BelongsTo
+    {
+        return $this->belongsTo(ClinicSchedule::class);
     }
 }

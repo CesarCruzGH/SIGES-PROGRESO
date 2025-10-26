@@ -74,21 +74,14 @@ class VisitasSemanalesChart extends ChartWidget
 
 
 
-        // Obtener recuentos por fecha (Y-m-d) dentro del rango.
-
+        // Obtener recuentos por fecha (Y-m-d) dentro del rango. Compatibilidad PostgreSQL.
         $results = Appointment::query()
-
             ->whereBetween('created_at', [$start, $end])
-
-            ->selectRaw('DATE(created_at) as date, COUNT(*) as aggregate')
-
-            ->groupBy('date')
-
-            ->orderBy('date')
-
+            ->selectRaw('created_at::date as day, COUNT(*) as aggregate')
+            ->groupByRaw('created_at::date')
+            ->orderBy('day')
             ->get()
-
-            ->keyBy('date');
+            ->keyBy('day');
 
 
 

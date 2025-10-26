@@ -43,12 +43,14 @@ class DaySchedule extends ListRecords
                             ]);
                         })
                         ->searchable()
+                        ->preload()
                         ->native(false)
                         ->required(),
                     Select::make('service_id')
                         ->label('Servicio')
                         ->relationship('service', 'name')
                         ->searchable()
+                        ->preload()
                         ->native(false)
                         ->required(),
                     Radio::make('shift')

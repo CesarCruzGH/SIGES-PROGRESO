@@ -4,20 +4,25 @@ namespace App\Filament\Resources\Appointments\Schemas;
 
 use App\Enums\AppointmentStatus;
 use App\Enums\VisitType;
+use App\Enums\Shift;
 use App\Filament\Resources\Patients\Schemas\PatientForm;
 use App\Models\MedicalRecord;
 use App\Models\Patient;
 use App\Models\Service;
 use App\Models\User;
+use App\Models\ClinicSchedule;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Schemas\Components\Fieldset;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 
 class AppointmentForm
 {
@@ -148,12 +153,54 @@ class AppointmentForm
                     ->placeholder('Se generará automáticamente si se deja vacío')
                     ->helperText('Dejar vacío para generar ticket walk-in automáticamente'),
 
+                DatePicker::make('date')
+                    ->label('Fecha de la cita')
+                    ->default(now()->toDateString())
+                    ->required()
+                    ->live(),
+
+                Radio::make('shift')
+                    ->label('Turno')
+                    ->options(Shift::class)
+                    ->inline()
+                    ->required()
+                    ->live()
+                    ->dehydrated(false),
+
+                Select::make('clinic_schedule_id')
+                    ->label('Consultorio activo')
+                    ->relationship('clinicSchedule', 'clinic_name', modifyQueryUsing: function (Builder $query,  $get) {
+                        $date = $get('date');
+                        $shift = $get('shift');
+                        return $query->where('is_active', true)
+                                     ->when($date, fn ($q) => $q->whereDate('date', $date))
+                                     ->when($shift, fn ($q) => $q->where('shift', $shift));
+                    })
+                    ->searchable()
+                    ->preload()
+                    ->required()
+                    ->visible(fn ( $get) => filled($get('date')) && filled($get('shift')))
+                    ->afterStateUpdated(function ($state,  $set) {
+                        if ($state) {
+                            $schedule = ClinicSchedule::find($state);
+                            if ($schedule) {
+                                $set('service_id', $schedule->service_id);
+                                $set('doctor_id', $schedule->user_id);
+                            }
+                        } else {
+                            $set('service_id', null);
+                            $set('doctor_id', null);
+                        }
+                    }),
+
                 Select::make('service_id')
                     ->label('Servicio')
                     ->relationship('service', 'name')
                     ->searchable()
                     ->preload()
-                    ->required(),
+                    ->required()
+                    ->disabled()
+                    ->helperText('Se llena automáticamente al elegir el consultorio activo.'),
                 Select::make('visit_type')
                     ->label('Tipo de Visita')
                     ->options(VisitType::class)
@@ -164,11 +211,9 @@ class AppointmentForm
                     ->label('Doctor')
                     ->relationship('doctor', 'name')
                     ->searchable()
-                    ->preload(),
-
-                TextInput::make('clinic_room_number')
-                    ->label('Número de Consultorio')
-                    ->numeric(),
+                    ->preload()
+                    ->disabled()
+                    ->helperText('Asignado automáticamente según el consultorio/turno.'),
 
                 Select::make('status')
                     ->label('Estado de la visita')
