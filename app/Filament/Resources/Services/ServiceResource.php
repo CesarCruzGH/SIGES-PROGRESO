@@ -57,4 +57,8 @@ class ServiceResource extends Resource
             'edit' => EditService::route('/{record}/edit'),
         ];
     }
+        public static function getNavigationSort(): ?int
+    {
+    return 6;
+    }
 }

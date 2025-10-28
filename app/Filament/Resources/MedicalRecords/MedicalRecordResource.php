@@ -67,4 +67,8 @@ class MedicalRecordResource extends Resource
             'edit' => EditMedicalRecord::route('/{record}/edit'),
         ];
     }
+        public static function getNavigationSort(): ?int
+    {
+    return 3;
+    }
 }

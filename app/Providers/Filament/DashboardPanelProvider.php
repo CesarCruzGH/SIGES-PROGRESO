@@ -57,7 +57,7 @@ class DashboardPanelProvider extends PanelProvider
                 TiposDePacienteChart::class,
                 VisitasPorMedicoChart::class,
                 AccountWidget::class,
-                FilamentInfoWidget::class,
+                //FilamentInfoWidget::class,
                 ClinicStatusWidget::class,
             ])
             ->middleware([

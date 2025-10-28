@@ -2,11 +2,15 @@
 
 namespace App\Filament\Resources\MedicalRecords\Tables;
 
+use App\Enums\PatientType;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Table;
 
 class MedicalRecordsTable
@@ -14,21 +18,46 @@ class MedicalRecordsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->contentGrid([
+                'md' => 2,
+                'xl' => 3,
+            ])
             ->columns([
-                TextColumn::make('record_number')
-                    ->label('N° de Expediente')
-                    ->searchable(),
-                // Mostramos el nombre del paciente a través de la relación
-                TextColumn::make('patient.full_name')
-                    ->label('Paciente')
-                    ->searchable(),
-                TextColumn::make('patient_type')
-                    ->badge()
-                    ->searchable(),
-                TextColumn::make('created_at')
-                    ->label('Fecha de Creación')
-                    ->dateTime('d/m/Y')
-                    ->sortable(),
+                Split::make([
+                    Stack::make([
+                        TextColumn::make('record_number')
+                            ->label('N° de Expediente')
+                            ->searchable()
+                            ->weight('bold')
+                            ->size('lg'),
+                        // Mostramos el nombre del paciente a través de la relación
+                        TextColumn::make('patient.full_name')
+                            ->label('Paciente')
+                            ->searchable()
+                            ->icon('heroicon-m-user')
+                            ->color('gray')
+                            ->size('sm'),
+                    ]),
+                    Stack::make([
+                        BadgeColumn::make('patient_type')
+                            ->label('Tipo de Paciente')
+                            ->formatStateUsing(fn ($state) => $state ? ($state instanceof PatientType ? $state->value : (string) $state) : 'Sin tipo')
+                            ->colors([
+                                'info' => static fn ($state): bool => in_array($state, [PatientType::EXTERNAL]),
+                                'success' => static fn ($state): bool => in_array($state, [PatientType::EMPLOYEE]),
+                                'warning' => static fn ($state): bool => in_array($state, [PatientType::EMPLOYEE_DEPENDENT]),
+                                'primary' => static fn ($state): bool => in_array($state, [PatientType::PEDIATRIC]),
+                                'gray' => static fn ($state): bool => $state === null,
+                            ]),
+                        TextColumn::make('created_at')
+                            ->label('Creación')
+                            ->dateTime('d/m/Y')
+                            ->sortable()
+                            ->icon('heroicon-m-calendar')
+                            ->color('gray')
+                            ->size('sm'),
+                    ]),
+                ]),
             ])
             ->filters([
                 //

@@ -89,4 +89,8 @@ class PatientResource extends Resource
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'active')),
         ];
     }
+        public static function getNavigationSort(): ?int
+    {
+    return 4;
+    }
 }

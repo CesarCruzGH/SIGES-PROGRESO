@@ -83,4 +83,8 @@ class UserResource extends Resource
                 ->badgeColor('gray'),
         ];
     }
+        public static function getNavigationSort(): ?int
+    {
+    return 5;
+    }
 }
