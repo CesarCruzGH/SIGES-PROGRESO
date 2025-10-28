@@ -173,21 +173,39 @@ class AppointmentForm
                         $date = $get('date');
                         $shift = $get('shift');
                         return $query->where('is_active', true)
-                                     ->when($date, fn ($q) => $q->whereDate('date', $date))
+                                     //->when($date, fn ($q) => $q->whereDate('date', $date))
                                      ->when($shift, fn ($q) => $q->where('shift', $shift));
                     })
                     ->searchable()
                     ->preload()
+                    ->reactive()
                     ->required()
-                    ->visible(fn ( $get) => filled($get('date')) && filled($get('shift')))
+                    ->visible(fn ( $get) => filled($get('clinic_schedule_id')) || filled($get('shift')))
+                    ->afterStateHydrated(function ($component, $state, $livewire) {
+                        if ($state) {
+                            $schedule = ClinicSchedule::find($state);
+                            if ($schedule) {
+                                if (blank($livewire->data['shift'] ?? null)) {
+                                    $livewire->data['shift'] = $schedule->shift;
+                                }
+                                if (blank($livewire->data['date'] ?? null)) {
+                                    $livewire->data['date'] = optional($schedule->date)->toDateString() ?? $schedule->date;
+                                }
+                                $livewire->data['service_id'] = $schedule->service_id;
+                                $livewire->data['doctor_id'] = $schedule->user_id;
+                            }
+                        }
+                    })
                     ->afterStateUpdated(function ($state,  $set) {
                         if ($state) {
                             $schedule = ClinicSchedule::find($state);
                             if ($schedule) {
+                                $set('date', optional($schedule->date)->toDateString() ?? $schedule->date);
                                 $set('service_id', $schedule->service_id);
                                 $set('doctor_id', $schedule->user_id);
                             }
                         } else {
+                            $set('date', null);
                             $set('service_id', null);
                             $set('doctor_id', null);
                         }
@@ -199,7 +217,7 @@ class AppointmentForm
                     ->searchable()
                     ->preload()
                     ->required()
-                    ->disabled()
+                    //->disabled()
                     ->helperText('Se llena automáticamente al elegir el consultorio activo.'),
                 Select::make('visit_type')
                     ->label('Tipo de Visita')
@@ -212,7 +230,7 @@ class AppointmentForm
                     ->relationship('doctor', 'name')
                     ->searchable()
                     ->preload()
-                    ->disabled()
+                    //->disabled()
                     ->helperText('Asignado automáticamente según el consultorio/turno.'),
 
                 Select::make('status')

@@ -51,5 +51,10 @@ class ClinicScheduleResource extends Resource
             'edit' => EditClinicSchedule::route('/{record}/edit'),
         ];
     }
+    public static function getNavigationSort(): ?int
+    {
+    return 1;
+    }
+
     
 }

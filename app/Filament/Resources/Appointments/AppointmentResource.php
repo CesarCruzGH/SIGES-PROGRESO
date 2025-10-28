@@ -83,5 +83,8 @@ class AppointmentResource extends Resource
             'edit' => EditAppointment::route('/{record}/edit'),
         ];
     }
-    // Las pestañas se definen en la página ListAppointments
+    public static function getNavigationSort(): ?int
+    {
+    return 2;
+    }
 }
