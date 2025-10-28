@@ -23,6 +23,7 @@ use App\Filament\Widgets\VisitasSemanalesChart;
 use App\Filament\Widgets\ServiciosMasSolicitadosChart;
 use App\Filament\Widgets\EstadoVisitasChart;
 use App\Filament\Widgets\TiposDePacienteChart;
+use App\Filament\Widgets\VisitasPorMedicoChart;
 
 class DashboardPanelProvider extends PanelProvider
 {
@@ -54,6 +55,7 @@ class DashboardPanelProvider extends PanelProvider
                 ServiciosMasSolicitadosChart::class,
                 EstadoVisitasChart::class,
                 TiposDePacienteChart::class,
+                VisitasPorMedicoChart::class,
                 AccountWidget::class,
                 FilamentInfoWidget::class,
                 ClinicStatusWidget::class,
