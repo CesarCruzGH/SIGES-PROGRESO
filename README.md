@@ -1,4 +1,174 @@
-# SIGES-PROGRESO — Documentación Técnica de Resources en Filament
+# SIGES-PROGRESO — Sistema de Gestión y Digitalización de Expedientes Médicos
+
+SIGES-PROGRESO es una aplicación web construida con Laravel y Filament para gestionar expedientes médicos, pacientes, servicios y citas, con paneles de indicadores interactivos basados en ApexCharts.
+
+Este README explica las funcionalidades principales y cómo poner el proyecto a trabajar en tu entorno local o de producción.
+
+## Características principales
+
+- Gestión de pacientes y expedientes clínicos, incluyendo adultos y menores.
+- Catálogo de servicios médicos sembrado (consulta general, pediatría, ginecología, laboratorio, etc.).
+- Citas y visitas con estados (`AppointmentStatus`) y tipos de visita (`VisitType`: primera vez y subsecuente).
+- Generación de documentos PDF (DOMPDF) y carga de archivos (plugin de Filament Upload).
+- Panel administrativo con indicadores y gráficos:
+  - Tipos de paciente (adulto vs. menor).
+  - Nuevos vs. recurrentes por periodo (semana/mes/año) — gráfico de columnas apiladas.
+  - Servicios más solicitados.
+  - Visitas por médico.
+  - Estado de visitas (agendadas, completadas, canceladas, etc.).
+  - Visitas semanales.
+- Páginas de Reportes dedicadas para organizar los widgets y evitar saturar el dashboard:
+  - `Indicadores (Pacientes)`
+  - `Indicadores (Servicios)`
+  - `Indicadores (Visitas)`
+
+## Tecnologías y versiones
+
+- PHP `^8.2`
+- Laravel `^11.31`
+- Filament `4.0`
+- Filament Apex Charts `4.0`
+- Laravel Sanctum para API tokens
+- Vite/Tailwind para assets
+- Base de datos recomendada: PostgreSQL (ver notas de compatibilidad más abajo)
+
+## Requisitos previos
+
+- PHP 8.2+ con extensiones comunes habilitadas.
+- Composer 2.x.
+- Node.js 18+ y npm.
+- PostgreSQL 14+ (recomendado). Puedes usar SQLite para desarrollo rápido, pero algunos widgets están optimizados para PostgreSQL.
+
+## Instalación (local)
+
+1. Clonar el repositorio:
+   ```bash
+   git clone <url-del-repo>
+   cd SIGES-PROGRESO
+   ```
+
+2. Instalar dependencias:
+   ```bash
+   composer install
+   npm install
+   ```
+
+3. Configurar entorno:
+   - Copia el `.env.example` a `.env` si no se creó automáticamente:
+     ```bash
+     copy .env.example .env  # En Windows PowerShell: Copy-Item .env.example .env
+     ```
+   - Edita variables de conexión a la base de datos (PostgreSQL recomendado):
+     ```env
+     DB_CONNECTION=pgsql
+     DB_HOST=127.0.0.1
+     DB_PORT=5432
+     DB_DATABASE=siges
+     DB_USERNAME=postgres
+     DB_PASSWORD=secret
+     ```
+   - Genera la clave de aplicación:
+     ```bash
+     php artisan key:generate
+     ```
+
+4. Migrar y sembrar datos:
+   ```bash
+   php artisan migrate --seed
+   php artisan storage:link
+   ```
+
+   Durante el seeding se crea:
+   - Usuario administrador: `admin@siges.com` con contraseña `password`.
+   - Usuario de API: `api-user@siges.com` y se imprime su token en consola.
+   - 75 pacientes de ejemplo (50 adultos, 25 menores).
+   - 30 usuarios adicionales de prueba con contraseña `password`.
+   - Catálogo de servicios médicos básicos.
+
+5. Arrancar en desarrollo (elige una opción):
+   - Procesos separados:
+     ```bash
+     php artisan serve
+     php artisan queue:listen --tries=1
+     npm run dev
+     ```
+   - Orquestado con Composer (servidor, cola, logs y Vite en paralelo):
+     ```bash
+     composer run dev
+     ```
+
+6. Acceder al panel:
+   - URL por defecto del panel Filament: `http://localhost:8000/admin`
+   - Inicia sesión con el administrador: correo `admin@siges.com`, contraseña `password`.
+
+## Páginas de Reportes y widgets
+
+- Navegación lateral: grupo `Reportes` con tres páginas dedicadas.
+- Cada página usa `getHeaderWidgets()` para mostrar los gráficos correspondientes:
+  - `Indicadores (Pacientes)`: Tipos de paciente y Nuevos vs recurrentes.
+  - `Indicadores (Servicios)`: Servicios más solicitados y Visitas por médico.
+  - `Indicadores (Visitas)`: Estado de visitas y Visitas semanales.
+- Filtros disponibles en widgets: semana, mes, año. Las consultas de periodo usan `to_char(...)` para compatibilidad con PostgreSQL.
+
+## API y tokens
+
+- El seeder `CoreDataSeeder` crea un usuario API (`api-user@siges.com`) y muestra su token en la consola al finalizar `db:seed`.
+- Si necesitas regenerar el token:
+  ```bash
+  php artisan tinker
+  >>> $u = App\Models\User::where('email','api-user@siges.com')->first();
+  >>> $u->tokens()->delete();
+  >>> $u->createToken('sistema-de-turnos-token')->plainTextToken;
+  ```
+
+## Scripts útiles
+
+- `composer run dev`: ejecuta servidor, cola, logs y Vite en paralelo.
+- `php artisan optimize:clear`: limpia caches (config, rutas, vistas, eventos, cache de app).
+- `php artisan migrate --graceful`: corre migraciones tolerantes.
+- `npm run build`: construye assets para producción.
+
+## Despliegue (producción)
+
+- Configurar `.env`:
+  ```env
+  APP_ENV=production
+  APP_DEBUG=false
+  APP_URL=https://tuservidor
+  DB_CONNECTION=pgsql
+  # Configura cache, sesión y colas según infraestructura
+  ```
+- Construir assets y optimizar:
+  ```bash
+  npm run build
+  php artisan optimize
+  php artisan migrate --force
+  ```
+- Configurar un `queue:work` o `supervisor` para procesar colas.
+- Servir con Nginx/Apache apuntando a `public/index.php`.
+
+## Solución de problemas
+
+- Error SQL `DATE_FORMAT` en PostgreSQL: las consultas de widgets usan `to_char(...)`. Si cambias de motor (MySQL/SQLite), adapta el SQL de agrupación por periodo.
+- Widgets vacíos o sin datos: verifica que ejecutaste `php artisan migrate --seed` y prueba distintos filtros (semana/mes/año).
+- Subidas de archivos: ejecuta `php artisan storage:link` y asegúrate de que el disco `public` esté configurado.
+- Cachés incoherentes: `php artisan optimize:clear`.
+
+## Estructura del proyecto (resumen)
+
+- `app/Models`: modelos principales (`Patient`, `Appointment`, `Service`, etc.).
+- `app/Enums`: tipos enumerados (`VisitType`, `AppointmentStatus`, `PatientType`, etc.).
+- `app/Filament/Widgets`: widgets de ApexCharts.
+- `app/Filament/Pages`: páginas de Reportes que agrupan los widgets.
+- `database/seeders`: datos iniciales (usuarios, servicios, pacientes, tokens, etc.).
+
+## Licencia
+
+Este proyecto usa la licencia MIT.
+
+## Contribuciones
+
+Las contribuciones son bienvenidas. Abre un issue o PR con tu propuesta.
 
 Este documento describe cómo está organizada la interfaz administrativa del proyecto usando Filament (Forms, Tables e Infolists), las interacciones entre los Resources, y las pautas para extender y mantener la solución.
 
