@@ -20,10 +20,15 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Filament\Widgets\VisitasSemanalesChart;
-use App\Filament\Widgets\ServiciosMasSolicitadosChart;
-use App\Filament\Widgets\EstadoVisitasChart;
-use App\Filament\Widgets\TiposDePacienteChart;
+use App\Filament\Widgets\ApexServiciosMasSolicitadosChart;
+use App\Filament\Widgets\ApexEstadoVisitasChart;
+use App\Filament\Widgets\ApexTiposDePacienteChart;
 use App\Filament\Widgets\VisitasPorMedicoChart;
+use App\Filament\Widgets\ApexVisitasPorMedicoChart;
+use App\Filament\Widgets\ApexVisitasSemanalesChart;
+use App\Filament\Widgets\ApexPacientesNuevosVSRecurrentes;
+
+use Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin;
 
 class DashboardPanelProvider extends PanelProvider
 {
@@ -44,21 +49,26 @@ class DashboardPanelProvider extends PanelProvider
                 'indigo' => Color::hex('#687FE5'),
             
             ])
+            ->plugins([
+                FilamentApexChartsPlugin::make(),
+            ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
-                VisitasSemanalesChart::class, //primer widget 
-                ServiciosMasSolicitadosChart::class,
-                EstadoVisitasChart::class,
-                TiposDePacienteChart::class,
-                VisitasPorMedicoChart::class,
-                AccountWidget::class,
-                //FilamentInfoWidget::class,
-                ClinicStatusWidget::class,
+                //ApexVisitasSemanalesChart::class, //primer widget 
+                ApexServiciosMasSolicitadosChart::class,
+                ApexEstadoVisitasChart::class,
+                ApexTiposDePacienteChart::class,
+                //VisitasPorMedicoChart::class,
+                ApexVisitasPorMedicoChart::class,
+                ApexVisitasSemanalesChart::class,
+                ApexPacientesNuevosVSRecurrentes::class,
+               // AccountWidget::class,
+               //FilamentInfoWidget::class,
+               //ClinicStatusWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
