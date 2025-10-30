@@ -27,7 +27,7 @@ use App\Filament\Widgets\VisitasPorMedicoChart;
 use App\Filament\Widgets\ApexVisitasPorMedicoChart;
 use App\Filament\Widgets\ApexVisitasSemanalesChart;
 use App\Filament\Widgets\ApexPacientesNuevosVSRecurrentes;
-
+use App\Filament\Widgets\UltimasVisitas;
 use Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin;
 
 class DashboardPanelProvider extends PanelProvider
@@ -54,21 +54,13 @@ class DashboardPanelProvider extends PanelProvider
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
+            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->pages([
-                Dashboard::class,
+                \App\Filament\Pages\ReceptionDashboard::class,
             ])
             ->widgets([
-                //ApexVisitasSemanalesChart::class, //primer widget 
-                ApexServiciosMasSolicitadosChart::class,
-                ApexEstadoVisitasChart::class,
-                ApexTiposDePacienteChart::class,
-                //VisitasPorMedicoChart::class,
-                ApexVisitasPorMedicoChart::class,
-                ApexVisitasSemanalesChart::class,
-                ApexPacientesNuevosVSRecurrentes::class,
-               // AccountWidget::class,
-               //FilamentInfoWidget::class,
-               //ClinicStatusWidget::class,
+                // Sin widgets por defecto en el cuerpo del dashboard;
+                // se mostrarán solo los de getHeaderWidgets() de ReceptionDashboard
             ])
             ->middleware([
                 EncryptCookies::class,
