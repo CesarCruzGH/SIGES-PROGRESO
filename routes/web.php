@@ -9,4 +9,7 @@ Route::get('/', function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/medical-leaves/{medicalLeaveId}/download/{copyType}', [PdfGeneratorController::class, 'downloadMedicalLeave'])
         ->name('medical-leave.download');
+
+    Route::get('/prescriptions/{prescriptionId}/download/{copyType}', [PdfGeneratorController::class, 'downloadPrescription'])
+        ->name('prescription.download');
 });

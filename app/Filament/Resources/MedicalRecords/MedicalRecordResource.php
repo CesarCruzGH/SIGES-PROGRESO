@@ -21,6 +21,7 @@ use App\Filament\Resources\MedicalRecords\RelationManagers\MedicalDocumentsRelat
 use App\Filament\Resources\MedicalRecords\RelationManagers\MedicalLeavesRelationManager;
 use App\Filament\Resources\MedicalRecords\RelationManagers\SomatometricReadingsRelationManager;
 use App\Filament\Resources\MedicalRecords\RelationManagers\NursingAssessmentRelationManager;
+use App\Filament\Resources\MedicalRecords\RelationManagers\PrescriptionsRelationManager;
 
 class MedicalRecordResource extends Resource
 {
@@ -55,6 +56,7 @@ class MedicalRecordResource extends Resource
             SomatometricReadingsRelationManager::class,
             MedicalDocumentsRelationManager::class,
             NursingAssessmentRelationManager::class,
+            PrescriptionsRelationManager::class,
         ];
     }
 

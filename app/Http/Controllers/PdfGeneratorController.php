@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Models\MedicalLeave;
+use App\Models\Prescription;
 use Barryvdh\DomPDF\Facade\Pdf; // Importar la clase PDF
 
 class PdfGeneratorController extends Controller
@@ -29,6 +30,24 @@ class PdfGeneratorController extends Controller
             $fileName = "incapacidad-{$medicalLeave->folio}-{$copyType}.pdf";
 
             // Descargar el PDF en el navegador del usuario
+            return $pdf->download($fileName);
+        }
+
+    public function downloadPrescription($prescriptionId, $copyType)
+        {
+            if (!in_array($copyType, ['patient', 'institution'])) {
+                abort(404, 'Tipo de copia no válido.');
+            }
+
+            $prescription = Prescription::with(['medicalRecord.patient', 'doctor'])->findOrFail($prescriptionId);
+
+            $pdf = Pdf::loadView('pdf.prescription', [
+                'prescription' => $prescription,
+                'copyType' => $copyType,
+            ]);
+
+            $fileName = "receta-{$prescription->folio}-{$copyType}.pdf";
+
             return $pdf->download($fileName);
         }
 }
