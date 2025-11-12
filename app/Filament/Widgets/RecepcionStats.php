@@ -50,6 +50,27 @@ class RecepcionStats extends BaseWidget
             $visitasSemanales->get(now()->subDays(6 - $day)->format('Y-m-d'), 0)
         )->toArray();
 
+        $appointmentsWithPatients = Appointment::query()
+            ->whereDate('created_at', today())
+            ->with('medicalRecord.patient')
+            ->get();
+
+        $ninos = $appointmentsWithPatients->filter(function ($a) {
+            $p = $a->medicalRecord->patient ?? null;
+            if (! $p || ! $p->date_of_birth) return false;
+            return Carbon::parse($p->date_of_birth)->age < 18;
+        })->count();
+
+        $mujeres = $appointmentsWithPatients->filter(function ($a) {
+            $p = $a->medicalRecord->patient ?? null;
+            return $p && $p->sex === 'Femenino';
+        })->count();
+
+        $hombres = $appointmentsWithPatients->filter(function ($a) {
+            $p = $a->medicalRecord->patient ?? null;
+            return $p && $p->sex === 'Masculino';
+        })->count();
+
 
         // --- 3. CONSTRUCCIÓN DE LAS TARJETAS (Sin cambios) ---
         return [
@@ -76,6 +97,21 @@ class RecepcionStats extends BaseWidget
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
                 ->chart($sparklineData)
                 ->color('success'),
+
+            Stat::make('Niños', $ninos)
+                ->description('Menores de 18 años')
+                ->descriptionIcon('heroicon-m-user')
+                ->color('info'),
+
+            Stat::make('Mujeres', $mujeres)
+                ->description('Visitas de hoy')
+                ->descriptionIcon('heroicon-m-user')
+                ->color('primary'),
+
+            Stat::make('Hombres', $hombres)
+                ->description('Visitas de hoy')
+                ->descriptionIcon('heroicon-m-user')
+                ->color('gray'),
         ];
     }
 
