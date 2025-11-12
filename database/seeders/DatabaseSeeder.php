@@ -14,11 +14,15 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            CoreDataSeeder::class,
-            ServiceSeeder::class,
-            DatabaseTestingSeeder::class,
             UserSeeder::class,
-            PersonalAccessTokensSeeder::class,
-        ]);   
+            ServiceSeeder::class,
+            ClinicScheduleSeeder::class,
+            PatientSeeder::class,
+            AppointmentSeeder::class,
+            PrescriptionSeeder::class,
+            SomatometricReadingSeeder::class,
+            NursingAssessmentSeeder::class,
+            MedicalDocumentSeeder::class,
+        ]);
     }
 }

@@ -2,50 +2,30 @@
 
 namespace Database\Factories;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
-//cases
-use App\Models\Tutor;
 use App\Enums\Locality;
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Patient>
- */
+use App\Models\Patient;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
 class PatientFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
+    protected $model = Patient::class;
+
     public function definition(): array
     {
-        $sex = $this->faker->randomElement(['Masculino', 'Femenino']);
-        // Por defecto, crea un paciente adulto
-        $dateOfBirth = $this->faker->dateTimeBetween('-80 years', '-18 years');
+        $sex = $this->faker->randomElement(['M','F']);
         return [
             'tutor_id' => null,
-            'full_name' => $this->faker->name($sex === 'Masculino' ? 'male' : 'female'),
-            'date_of_birth' => $dateOfBirth,
+            'full_name' => $this->faker->name(),
+            'date_of_birth' => $this->faker->dateTimeBetween('-90 years', '-1 year')->format('Y-m-d'),
             'sex' => $sex,
-            'curp' => $this->faker->unique()->numerify('##################'), // CURP falso simple
+            'curp' => $this->faker->optional()->regexify('[A-Z]{4}[0-9]{6}[A-Z]{6}[0-9]{2}'),
             'locality' => $this->faker->randomElement(Locality::cases()),
-            'contact_phone' => $this->faker->e164PhoneNumber(),
+            'contact_phone' => $this->faker->phoneNumber(),
             'address' => $this->faker->address(),
-            'has_disability' => $this->faker->boolean(10), // 10% de probabilidad de tener discapacidad
-            'disability_details' => $this->faker->optional()->sentence(),
-            'status' => 'active',
+            'has_disability' => $this->faker->boolean(10),
+            'disability_details' => $this->faker->optional()->sentence(6),
+            'status' => $this->faker->randomElement(['active','pending_review']),
         ];
     }
-    /**
-     * Define un estado para crear un paciente menor de edad.
-     */
-    public function isMinor(): Factory
-    {
-        return $this->state(function (array $attributes) {
-            return [
-                'date_of_birth' => $this->faker->dateTimeBetween('-17 years', '-1 day'),
-                // Crea un nuevo tutor o usa uno existente, y le asigna el ID al paciente.
-                'tutor_id' => Tutor::factory(),
-            ];
-        });
-    }
 }
+

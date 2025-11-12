@@ -2,14 +2,14 @@
 
 namespace Database\Seeders;
 
-use App\Models\Service;
+use App\Models\Patient;
 use Illuminate\Database\Seeder;
 
-class ServiceSeeder extends Seeder
+class PatientSeeder extends Seeder
 {
     public function run(): void
     {
-        Service::factory()->count(10)->create();
+        Patient::factory()->count(100)->create();
     }
 }
 

@@ -2,7 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Enums\Shift;
 use App\Models\Service;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ServiceFactory extends Factory
@@ -12,18 +14,9 @@ class ServiceFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->unique()->words(3, true),
-            'description' => $this->faker->paragraph(),
-            'is_active' => $this->faker->boolean(100), // 90% probabilidad de estar activo
-            'created_at' => now(),
-            'updated_at' => now(),
+            'name' => $this->faker->randomElement(['Consulta General','Nutrición','Psicología','Farmacia','Control','Urgencias']).' '.$this->faker->unique()->numerify('###'),
+            'description' => $this->faker->sentence(8),
+            'is_active' => true,
         ];
-    }
-
-    public function inactive(): self
-    {
-        return $this->state(fn (array $attributes) => [
-            'is_active' => false,
-        ]);
     }
 }
