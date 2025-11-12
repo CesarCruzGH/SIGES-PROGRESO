@@ -18,6 +18,10 @@ use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Forms\Form;
+use Filament\Infolists;
+use Filament\Infolists\Components\Section as InfoSection;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\RepeatableEntry;
 
 class ViewAppointment extends ViewRecord
 {
@@ -110,8 +114,29 @@ class ViewAppointment extends ViewRecord
 
                     $this->redirect(route('prescription.download', ['prescriptionId' => $prescription->id, 'copyType' => 'patient']));
                 }),
+
+            Action::make('print_prescription_patient')
+                ->label('Imprimir receta (Paciente)')
+                ->icon('heroicon-o-printer')
+                ->color('primary')
+                ->visible(fn () => Prescription::where('medical_record_id', $this->record->medical_record_id)->exists())
+                ->url(fn () => route('prescription.download', [
+                    'prescriptionId' => Prescription::where('medical_record_id', $this->record->medical_record_id)->orderByDesc('id')->value('id'),
+                    'copyType' => 'patient',
+                ])),
+
+            Action::make('print_prescription_institution')
+                ->label('Imprimir receta (Institución)')
+                ->icon('heroicon-o-printer')
+                ->color('gray')
+                ->visible(fn () => Prescription::where('medical_record_id', $this->record->medical_record_id)->exists())
+                ->url(fn () => route('prescription.download', [
+                    'prescriptionId' => Prescription::where('medical_record_id', $this->record->medical_record_id)->orderByDesc('id')->value('id'),
+                    'copyType' => 'institution',
+                ])),
         ];
     }
+
         public function getTitle(): string
     {
         // La variable $this->record contiene la visita que se está viendo.
