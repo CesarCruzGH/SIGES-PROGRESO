@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             SomatometricReadingSeeder::class,
             NursingAssessmentSeeder::class,
             MedicalDocumentSeeder::class,
+            ApiTokenSeeder::class,
         ]);
     }
 }

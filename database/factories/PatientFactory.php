@@ -3,7 +3,9 @@
 namespace Database\Factories;
 
 use App\Enums\Locality;
+use App\Enums\PatientType;
 use App\Models\Patient;
+use Illuminate\Support\Arr;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class PatientFactory extends Factory
@@ -27,5 +29,12 @@ class PatientFactory extends Factory
             'status' => $this->faker->randomElement(['active','pending_review']),
         ];
     }
-}
 
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Patient $patient) {
+            $type = Arr::random(PatientType::cases());
+            $patient->medicalRecord()->update(['patient_type' => $type]);
+        });
+    }
+}
