@@ -14,7 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        $middleware->alias([
+            'check.shift' => \App\Http\Middleware\CheckShiftStatus::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

@@ -1,5 +1,121 @@
 # SIGES-PROGRESO — Sistema de Gestión y Digitalización de Expedientes Médicos
 
+Sistema para la gestión clínica y digitalización de expedientes médicos con panel administrativo basado en Filament. Incluye módulos de pacientes, citas, expedientes, documentos, ausencias médicas y gestión de turnos de clínica.
+
+## Requisitos
+
+- `PHP >= 8.2`
+- `Composer`
+- `Node.js >= 18` y `npm`
+- `PostgreSQL` (recomendado `>= 14`)
+
+## Instalación
+
+1. Clonar el repositorio.
+2. Copiar el archivo de entorno:
+   - `cp .env.example .env` (Linux/Mac) o duplicar manualmente en Windows.
+3. Configurar credenciales en `.env` (DB, correo, etc.). Ejemplo de variables clave:
+   - `DB_CONNECTION=pgsql`
+   - `DB_HOST=127.0.0.1`
+   - `DB_PORT=5432`
+   - `DB_DATABASE=siges`
+   - `DB_USERNAME=postgres`
+   - `DB_PASSWORD=********`
+4. Instalar dependencias de PHP:
+   - `composer install`
+5. Instalar dependencias Frontend:
+   - `npm install`
+6. Generar clave de aplicación:
+   - `php artisan key:generate`
+
+## Migraciones y datos
+
+- Ejecutar migraciones:
+  - `php artisan migrate`
+- Poblar datos base (opcional):
+  - `php artisan db:seed` (usa `DatabaseSeeder` y seeders relacionados)
+
+### Nota sobre columnas de Turnos de Clínica
+
+Para evitar errores de columnas indefinidas (por ejemplo, `is_shift_open`), se añadió una migración incremental:
+
+- `database/migrations/2025_10_31_130500_add_shift_columns_to_clinic_schedules.php`
+
+Esta migración agrega a `clinic_schedules` los campos:
+
+- `is_shift_open` (boolean)
+- `shift_opened_at` (timestamp)
+- `shift_closed_at` (timestamp)
+- `opened_by` (foreignId a `users`)
+- `closed_by` (foreignId a `users`)
+- `opening_notes` (text)
+- `closing_notes` (text)
+- `is_active` (boolean)
+
+Si ves mensajes como “Undefined column…”, ejecuta nuevamente:
+
+- `php artisan migrate`
+
+## Servidor de desarrollo
+
+- Iniciar servidor Laravel:
+  - `php artisan serve`
+  - Acceso: `http://127.0.0.1:8000/`
+- Iniciar Vite (assets):
+  - `npm run dev`
+
+## Panel y rutas (Filament)
+
+- Panel principal ID: `dashboard`
+- Path base del panel: `/dashboard`
+- Rutas principales:
+  - Dashboard: `http://127.0.0.1:8000/dashboard`
+  - Gestión de Turnos (consolidado): `http://127.0.0.1:8000/dashboard/clinic-schedules/day`
+  - Horarios de Clínica: `http://127.0.0.1:8000/dashboard/clinic-schedules`
+
+ Las redirecciones tras abrir/cerrar turno se realizan al path del panel (`/dashboard`) para evitar depender de nombres de rutas variables.
+
+ ## Uso: Gestión de Turnos (consolidada en clinic-schedules)
+
+ - Usa `Horario del Día` (`clinic-schedules/day`) para abrir y cerrar turnos del día.
+ - “Turnos disponibles para abrir” se basan en registros del día con:
+   - `date = hoy`, `is_active = true` y `is_shift_open = false`.
+ - Crea/verifica asignaciones desde “Horarios de Clínica”. Los botones `Abrir Turno` y `Cerrar Turno` están en la tabla.
+ - Tras abrir/cerrar un turno, se redirige al Dashboard del panel (`/dashboard`).
+
+## Solución de problemas comunes
+
+- Error `Illuminate\Database\QueryException` con columna indefinida (ej. `is_shift_open`):
+  - Tu base de datos no tiene las columnas recientes; ejecuta `php artisan migrate`.
+
+- Error `RouteNotFoundException` relacionado con `filament.admin.pages.*`:
+  - El proyecto usa el panel `dashboard`. Asegúrate de usar rutas bajo `/dashboard`.
+  - Las redirecciones internas se ajustaron para usar `url('/dashboard')`.
+
+- No aparecen turnos disponibles:
+  - Verifica que existan `clinic_schedules` para hoy, activos y sin turno abierto.
+
+## Scripts útiles
+
+- Compilar producción: `npm run build`
+- Limpiar cachés: `php artisan optimize:clear`
+- Ejecutar tests: `phpunit`
+
+## Estructura relevante
+
+- Migraciones de clínica:
+  - `2025_10_24_174307_create_clinic_schedules_table.php`
+  - `2025_10_31_130500_add_shift_columns_to_clinic_schedules.php`
+- Páginas Filament:
+  - `app/Filament/Pages/ShiftManagement.php`
+  - `app/Providers/Filament/DashboardPanelProvider.php`
+- Middleware:
+  - `app/Http/Middleware/CheckShiftStatus.php`
+
+---
+
+Si necesitas que el Dashboard post-apertura cierre redirija a otra página específica (por ejemplo, una recepción distinta), indícalo y ajustamos la ruta de redirección correspondiente.
+
 SIGES-PROGRESO es una aplicación web construida con Laravel y Filament para gestionar expedientes médicos, pacientes, servicios y citas, con paneles de indicadores interactivos basados en ApexCharts.
 
 Este README explica las funcionalidades principales y cómo poner el proyecto a trabajar en tu entorno local o de producción.

@@ -26,6 +26,15 @@ return new class extends Migration
             $table->date('date'); // The specific day this schedule is for
             $table->boolean('is_active')->default(false); // Off by default
 
+            // Campos para control de apertura/cierre de turno
+            $table->boolean('is_shift_open')->default(false)->comment('Indica si el turno está abierto');
+            $table->timestamp('shift_opened_at')->nullable()->comment('Fecha y hora de apertura del turno');
+            $table->timestamp('shift_closed_at')->nullable()->comment('Fecha y hora de cierre del turno');
+            $table->foreignId('opened_by')->nullable()->constrained('users')->comment('Usuario que abrió el turno');
+            $table->foreignId('closed_by')->nullable()->constrained('users')->comment('Usuario que cerró el turno');
+            $table->text('opening_notes')->nullable()->comment('Notas al abrir el turno');
+            $table->text('closing_notes')->nullable()->comment('Notas al cerrar el turno');
+
             // Ensure one unique assignment per clinic + date + shift
             $table->unique(['clinic_name', 'date', 'shift'], 'clinic_day_shift_unique');
 

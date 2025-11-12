@@ -72,6 +72,7 @@ class DashboardPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                'check.shift',
             ])
             ->authMiddleware([
                 Authenticate::class,

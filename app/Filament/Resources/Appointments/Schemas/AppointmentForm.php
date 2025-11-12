@@ -164,17 +164,18 @@ class AppointmentForm
                     ->options(Shift::class)
                     ->inline()
                     ->required()
-                    ->live()
-                    ->dehydrated(false),
+                    ->live(),
 
                 Select::make('clinic_schedule_id')
                     ->label('Consultorio activo')
                     ->relationship('clinicSchedule', 'clinic_name', modifyQueryUsing: function (Builder $query,  $get) {
                         $date = $get('date');
                         $shift = $get('shift');
-                        return $query->where('is_active', true)
-                                     //->when($date, fn ($q) => $q->whereDate('date', $date))
-                                     ->when($shift, fn ($q) => $q->where('shift', $shift));
+                        return $query
+                            ->where('is_active', true)
+                            ->where('is_shift_open', true)
+                            ->when($date, fn ($q) => $q->whereDate('date', $date))
+                            ->when($shift, fn ($q) => $q->where('shift', $shift));
                     })
                     ->searchable()
                     ->preload()
@@ -186,7 +187,8 @@ class AppointmentForm
                             $schedule = ClinicSchedule::find($state);
                             if ($schedule) {
                                 if (blank($livewire->data['shift'] ?? null)) {
-                                    $livewire->data['shift'] = $schedule->shift;
+                                    // Usar el valor del enum para evitar desajustes
+                                    $livewire->data['shift'] = $schedule->shift->value;
                                 }
                                 if (blank($livewire->data['date'] ?? null)) {
                                     $livewire->data['date'] = optional($schedule->date)->toDateString() ?? $schedule->date;
@@ -200,11 +202,14 @@ class AppointmentForm
                         if ($state) {
                             $schedule = ClinicSchedule::find($state);
                             if ($schedule) {
+                                // Sincronizar turno con el consultorio seleccionado (usar valor del enum)
+                                $set('shift', $schedule->shift->value);
                                 $set('date', optional($schedule->date)->toDateString() ?? $schedule->date);
                                 $set('service_id', $schedule->service_id);
                                 $set('doctor_id', $schedule->user_id);
                             }
                         } else {
+                            $set('shift', null);
                             $set('date', null);
                             $set('service_id', null);
                             $set('doctor_id', null);

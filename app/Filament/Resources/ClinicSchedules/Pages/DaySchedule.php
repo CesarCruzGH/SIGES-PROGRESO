@@ -22,6 +22,25 @@ class DaySchedule extends ListRecords
 
     protected static ?string $title = 'Horario del Día';
 
+    public function mount(): void
+    {
+        // Mostrar notificaciones si el middleware las dejó en sesión
+        if (session()->has('shift_required')) {
+            Notification::make()
+                ->title('Turno requerido')
+                ->body(session('shift_required'))
+                ->warning()
+                ->send();
+        }
+        if (session()->has('no_shifts_available')) {
+            Notification::make()
+                ->title('Sin turnos disponibles')
+                ->body(session('no_shifts_available'))
+                ->danger()
+                ->send();
+        }
+    }
+
     protected function getHeaderActions(): array
     {
         return [

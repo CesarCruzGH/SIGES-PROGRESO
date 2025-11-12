@@ -8,6 +8,10 @@ use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Notifications\Notification;
 use Filament\Actions\Action;
+use Filament\Support\Exceptions\Halt;
+use App\Models\ClinicSchedule;
+use Illuminate\Support\Carbon;
+use BackedEnum;
 
 class EditAppointment extends EditRecord
 {
@@ -54,5 +58,38 @@ class EditAppointment extends EditRecord
         // La variable $this->record contiene la visita que se está viendo.
         // Construimos un título más descriptivo.
         return "Editar detalles de la Visita #{$this->getRecord()->ticket_number}";
+    }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        // Solo aplicamos restricción fuerte si la visita es para hoy.
+        $scheduleId = $data['clinic_schedule_id'] ?? null;
+        $date = $data['date'] ?? null;
+        $shift = $data['shift'] ?? null;
+
+        $schedule = $scheduleId ? ClinicSchedule::find($scheduleId) : null;
+        // Normalizar turno: si viene como Enum, usar su valor; si no viene, usar el del consultorio
+        if ($shift instanceof BackedEnum) {
+            $shift = $shift->value;
+        }
+        if ($shift === null && $schedule) {
+            $shift = $schedule->shift->value;
+        }
+
+        $isToday = $date ? Carbon::parse($date)->isToday() : false;
+        $dateMatches = $schedule && $schedule->date && Carbon::parse($schedule->date)->toDateString() === Carbon::parse($date)->toDateString();
+        $shiftMatches = $schedule && $schedule->shift->value === $shift;
+
+        if ($isToday && (!$schedule || !$schedule->is_active || !$schedule->is_shift_open || !$dateMatches || !$shiftMatches)) {
+            Notification::make()
+                ->title('Turno no disponible')
+                ->body('No se pueden guardar cambios que asignen la visita a un turno cerrado o diferente al seleccionado.')
+                ->danger()
+                ->send();
+
+            throw new Halt();
+        }
+
+        return $data;
     }
 }

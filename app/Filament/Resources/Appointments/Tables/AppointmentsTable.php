@@ -153,7 +153,15 @@ class AppointmentsTable
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make(),
-                    EditAction::make()->visible(fn ($record) => $record->medicalRecord->patient->status === 'active')
+                    EditAction::make()->visible(fn ($record) =>
+                        $record->medicalRecord->patient->status === 'active'
+                        && (
+                            // Si la visita es hoy, exigir turno abierto; de lo contrario, permitir.
+                            ($record->date?->isToday() ?? false)
+                                ? (optional($record->clinicSchedule)->is_shift_open ?? false)
+                                : true
+                        )
+                    )
                     ,   
                                     
                     Action::make('complete_patient_record')
