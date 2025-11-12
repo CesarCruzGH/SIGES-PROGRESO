@@ -11,13 +11,16 @@ class ReceptionDashboard extends Dashboard
     protected function getHeaderWidgets(): array
     {
         return [
-            \App\Filament\Widgets\UltimasVisitas::class,
+            \App\Filament\Widgets\RecepcionStats::class,
+            \App\Filament\Widgets\QuickActionsWidget::class,
         ];
     }
 
     public function getWidgets(): array
     {
-        // Vaciar widgets del cuerpo del dashboard para que solo se muestre el encabezado.
-        return [];
+        return [
+            \App\Filament\Widgets\ColaRecepcionTable::class,
+            \App\Filament\Widgets\UltimasVisitas::class,
+        ];
     }
 }

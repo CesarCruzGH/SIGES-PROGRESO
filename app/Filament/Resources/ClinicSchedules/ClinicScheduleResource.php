@@ -19,8 +19,8 @@ class ClinicScheduleResource extends Resource
 {
     protected static ?string $model = ClinicSchedule::class;
     // --- UX Improvements ---
-    protected static ?string $navigationLabel = 'Horario de Consultorios';
-    protected static ?string $pluralModelLabel = 'Horarios de Consultorios';
+    protected static ?string $navigationLabel = 'Turno y Consultorios';
+    protected static ?string $pluralModelLabel = 'Turnos y Consultorios';
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-clock';
 
     protected static ?string $recordTitleAttribute = 'clinic_name';

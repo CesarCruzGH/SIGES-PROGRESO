@@ -15,7 +15,7 @@ use Carbon\Carbon;
 class UltimasVisitas extends TableWidget
 {
     protected static ?string $heading = 'Últimas visitas (en vivo)';
-    protected int | string | array $columnSpan = 'full';
+    protected int | string | array $columnSpan = ['md' => 6];
     public function table(Table $table): Table
     {
         return $table
