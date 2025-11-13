@@ -25,6 +25,7 @@ class MedicalRecord extends Model
     protected $casts = [
         'patient_type' => PatientType::class,
         'employee_status' => EmployeeStatus::class,
+        'consent_form_path' => 'encrypted',
     ];
 
     protected static function booted(): void
@@ -71,5 +72,4 @@ class MedicalRecord extends Model
         return $this->hasMany(Prescription::class);
     }
 }
-
 

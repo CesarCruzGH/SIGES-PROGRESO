@@ -22,6 +22,11 @@ class MedicalDocument extends Model
         'file_path',
     ];
 
+    protected $casts = [
+        'name' => 'encrypted',
+        'file_path' => 'encrypted',
+    ];
+
     /**
      * Relación: El documento pertenece a un Expediente Médico.
      */

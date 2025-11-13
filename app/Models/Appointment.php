@@ -32,6 +32,8 @@ class Appointment extends Model
         // Conectamos el campo 'status' a nuestro Enum
         'status' => AppointmentStatus::class,
         'date' => 'date',
+        'reason_for_visit' => 'encrypted',
+        'notes' => 'encrypted',
     ];
 
     /**

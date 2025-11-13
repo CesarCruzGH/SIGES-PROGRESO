@@ -16,6 +16,13 @@ class Tutor extends Model
         'address',
     ];
 
+    protected $casts = [
+        'full_name' => 'encrypted',
+        'relationship' => 'encrypted',
+        'phone_number' => 'encrypted',
+        'address' => 'encrypted',
+    ];
+
     // Relaciones
     public function patient()
     {

@@ -15,12 +15,15 @@ class PatientFactory extends Factory
     public function definition(): array
     {
         $sex = $this->faker->randomElement(['M','F']);
+        $curp = $this->faker->boolean(80)
+            ? strtoupper($this->faker->unique()->regexify('[A-Z]{4}[0-9]{6}[A-Z]{6}[0-9]{2}'))
+            : null;
         return [
             'tutor_id' => null,
             'full_name' => $this->faker->name(),
             'date_of_birth' => $this->faker->dateTimeBetween('-90 years', '-1 year')->format('Y-m-d'),
             'sex' => $sex,
-            'curp' => $this->faker->optional()->regexify('[A-Z]{4}[0-9]{6}[A-Z]{6}[0-9]{2}'),
+            'curp' => $curp,
             'locality' => $this->faker->randomElement(Locality::cases()),
             'contact_phone' => $this->faker->phoneNumber(),
             'address' => $this->faker->address(),

@@ -34,6 +34,11 @@ class Patient extends Model
         'has_disability' => 'boolean',
         'locality' => Locality::class,
         'status' => 'string',
+        'full_name' => 'encrypted',
+        'curp' => 'encrypted',
+        'contact_phone' => 'encrypted',
+        'address' => 'encrypted',
+        'disability_details' => 'encrypted',
 
     ];
     // Este accesor ahora es la única fuente de verdad para la edad. ¡Perfecto!
@@ -63,6 +68,11 @@ class Patient extends Model
         static::created(function (Patient $patient) {
 
             $patient->medicalRecord()->create([]);
+        });
+
+        static::saving(function (Patient $patient) {
+            $curp = $patient->curp;
+            $patient->curp_hash = $curp ? hash('sha256', strtoupper(trim($curp))) : null;
         });
     }
 }

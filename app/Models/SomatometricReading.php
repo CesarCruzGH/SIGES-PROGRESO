@@ -25,6 +25,10 @@ class SomatometricReading extends Model
         'observations',
     ];
 
+    protected $casts = [
+        'observations' => 'encrypted',
+    ];
+
     // Relaciones
     public function medicalRecord(): BelongsTo
     {

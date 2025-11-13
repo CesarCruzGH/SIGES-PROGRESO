@@ -22,6 +22,11 @@ class NursingAssessment extends Model
         'personal_pathological_history',
     ];
 
+    protected $casts = [
+        'allergies' => 'encrypted',
+        'personal_pathological_history' => 'encrypted',
+    ];
+
     /**
      * Relación: La valoración pertenece a un Expediente Médico.
      */

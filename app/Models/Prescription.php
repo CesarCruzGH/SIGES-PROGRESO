@@ -24,7 +24,9 @@ class Prescription extends Model
 
     protected $casts = [
         'issue_date' => 'date',
-        'items' => 'array',
+        'diagnosis' => 'encrypted',
+        'notes' => 'encrypted',
+        'items' => 'encrypted:json',
     ];
 
     protected static function booted(): void
