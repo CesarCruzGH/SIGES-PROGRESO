@@ -65,66 +65,78 @@ class ApiController extends Controller
      * El método "Todo en Uno" refactorizado para la nueva arquitectura.
      */
     public function storeVisit(Request $request): JsonResponse
-    {
-        $validatedData = $request->validate([
-            'record_number' => ['nullable', 'string', 'exists:medical_records,record_number'],
-            'ticket_number' => ['required', 'string', 'max:255', 'unique:appointments,ticket_number'],
-            'service_id' => ['required', 'integer', 'exists:services,id'],
-            'reason_for_visit' => ['required', 'string'],
-        ]);
+{
+    $data = $request->validate([
+        'record_number' => ['nullable', 'string', 'exists:medical_records,record_number'],
+        'medical_record_id' => ['nullable', 'integer', 'exists:medical_records,id'],
+        'ticket_number' => ['required', 'string', 'max:255', 'unique:appointments,ticket_number'],
+        'service_id' => ['required', 'integer', 'exists:services,id'],
+        'reason_for_visit' => ['required', 'string'],
+    ]);
 
+    DB::beginTransaction();
+    try {
         $medicalRecord = null;
         $newPatientCreated = false;
 
-        DB::beginTransaction();
-        try {
-            if (isset($validatedData['record_number'])) {
-                $medicalRecord = MedicalRecord::where('record_number', $validatedData['record_number'])->firstOrFail();
-            } else {
-                $patient = Patient::create(['status' => 'pending_review']);
-                $medicalRecord = $patient->medicalRecord;
-                $newPatientCreated = true;
-            }
-
-            $appointment = $medicalRecord->appointments()->create([
-                'ticket_number' => $validatedData['ticket_number'],
-                'service_id' => $validatedData['service_id'],
-                'reason_for_visit' => $validatedData['reason_for_visit'],
-            ]);
-            
-            DB::commit();
-
-            // --- LÓGICA DE NOTIFICACIÓN CORREGIDA ---
-            // Para pruebas, notificamos a TODOS los usuarios.
-            $recipients = User::all(); 
-            // Buscamos solo a los usuarios con el rol de recepcionista.
-            //$recipients = User::where('role', 'recepcionista')->get();
-            Notification::make()
-                ->title('Nueva Visita Registrada')
-                ->body("Se ha registrado una nueva visita con el ticket #{$appointment->ticket_number} para el servicio de '{$appointment->service->name}' con motivo de '{$appointment->reason_for_visit}'")
-                ->icon('heroicon-s-ticket')
-                ->info()
-                ->duration(8000)
-                ->actions([
-                    // Usamos el alias que definimos arriba
-                    Action::make('view')
-                        ->label('Ver Visita')
-                        ->url(AppointmentResource::getUrl('view', ['record' => $appointment]))
-                        ->markAsRead()
-                        ->button(),
-                ])
-                ->sendToDatabase($recipients);
-
-            return response()->json([
-                'message' => 'Visita registrada exitosamente en SIGES-PROGRESO.',
-                'appointment_id' => $appointment->id,
-                'medical_record_id' => $medicalRecord->id,
-                'new_patient_created' => $newPatientCreated,
-            ], 201);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['message' => 'Error interno al procesar la visita.', 'error' => $e->getMessage()], 500);
+        if (!empty($data['medical_record_id'])) {
+            $medicalRecord = MedicalRecord::find($data['medical_record_id']);
+        } elseif (!empty($data['record_number'])) {
+            $medicalRecord = MedicalRecord::where('record_number', $data['record_number'])->first();
+        } else {
+            $patient = Patient::create(['status' => 'pending_review']);
+            // Garantizar el expediente aun si el evento created no se ha reflejado en la instancia actual
+            $medicalRecord = $patient->medicalRecord()->firstOrCreate([]);
+            $newPatientCreated = true;
         }
+
+        if (!$medicalRecord) {
+            DB::rollBack();
+            return response()->json(['message' => 'No se pudo resolver o crear el expediente médico.'], 422);
+        }
+
+        // Crear usando ID explícito; evita nulos en relaciones
+        $appointment = Appointment::create([
+            'medical_record_id' => $medicalRecord->id,
+            'service_id' => $data['service_id'],
+            'ticket_number' => $data['ticket_number'],
+            'reason_for_visit' => $data['reason_for_visit'],
+            'status' => \App\Enums\AppointmentStatus::PENDING,
+            'date' => now()->toDateString(),
+        ]);
+
+        DB::commit();
+
+        // Notificación opcional (ajusta destinatarios según tu flujo)
+        $recipients = User::all();
+        \Filament\Notifications\Notification::make()
+            ->title('Nueva Visita Registrada')
+            ->body("Ticket #{$appointment->ticket_number} • Servicio '{$appointment->service->name}' • Motivo '{$appointment->reason_for_visit}'")
+            ->icon('heroicon-s-ticket')
+            ->info()
+            ->duration(8000)
+            ->actions([
+                Action::make('view')
+                    ->label('Ver Visita')
+                    ->url(AppointmentResource::getUrl('view', ['record' => $appointment]))
+                    ->markAsRead()
+                    ->button(),
+            ])
+            ->sendToDatabase($recipients);
+
+        return response()->json([
+            'message' => 'Visita registrada exitosamente.',
+            'appointment_id' => $appointment->id,
+            'medical_record_id' => $medicalRecord->id,
+            'new_patient_created' => $newPatientCreated,
+        ], 201);
+
+    } catch (\Illuminate\Validation\ValidationException $ve) {
+        DB::rollBack();
+        return response()->json(['message' => 'Datos inválidos', 'errors' => $ve->errors()], 422);
+    } catch (\Throwable $e) {
+        DB::rollBack();
+        return response()->json(['message' => 'Error interno al procesar la visita.', 'error' => $e->getMessage()], 500);
     }
+}
 }

@@ -16,7 +16,7 @@ return new class extends Migration
 
             // --- RELACIONES ---
             // Cada visita pertenece a un expediente médico.
-            $table->foreignId('medical_record_id')->constrained('medical_records')->cascadeOnDelete();
+            $table->foreignId('medical_record_id')->constrained('medical_records')->cascadeOnDelete()->nullable();
             $table->foreignId('service_id')->constrained('services')->cascadeOnDelete();
             // El médico que atiende EN ESTA VISITA (opcional, se asigna después)
             $table->foreignId('doctor_id')->nullable()->constrained('users')->nullOnDelete();
