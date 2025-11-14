@@ -7,10 +7,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Models\Activity;
 
 class Prescription extends Model
 {
-    use SoftDeletes, HasFactory;
+    use SoftDeletes, HasFactory, LogsActivity;
 
     protected $fillable = [
         'medical_record_id',
@@ -44,6 +47,31 @@ class Prescription extends Model
                 $prescription->folio = 'REC-' . now()->year . '-' . str_pad($nextVal, 5, '0', STR_PAD_LEFT);
             }
         });
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('medical')
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
+
+    public function descriptionForEvent(string $eventName): string
+    {
+        return "Receta {$eventName}";
+    }
+
+    public function tapActivity(Activity $activity, string $eventName): void
+    {
+        $activity->properties = array_merge($activity->properties->toArray(), [
+            'medical_record_id' => $this->medical_record_id,
+            'ip' => request()->ip(),
+            'user_agent' => substr((string) request()->userAgent(), 0, 255),
+            'route' => optional(request()->route())->getName(),
+            'causer_role' => optional($activity->causer)->role?->value,
+        ]);
     }
 
     public function medicalRecord()

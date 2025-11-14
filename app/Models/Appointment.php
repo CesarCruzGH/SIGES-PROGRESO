@@ -6,12 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 use App\Enums\AppointmentStatus; // <-- Importar el nuevo Enum
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Models\Activity;
 use Illuminate\Support\Facades\DB;
 use App\Models\ClinicSchedule;
 
 class Appointment extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'medical_record_id',
@@ -35,6 +38,31 @@ class Appointment extends Model
         'reason_for_visit' => 'encrypted',
         'notes' => 'encrypted',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('medical')
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
+
+    public function descriptionForEvent(string $eventName): string
+    {
+        return "Visita {$eventName}";
+    }
+
+    public function tapActivity(Activity $activity, string $eventName): void
+    {
+        $activity->properties = array_merge($activity->properties->toArray(), [
+            'medical_record_id' => $this->medical_record_id,
+            'ip' => request()->ip(),
+            'user_agent' => substr((string) request()->userAgent(), 0, 255),
+            'route' => optional(request()->route())->getName(),
+            'causer_role' => optional($activity->causer)->role?->value,
+        ]);
+    }
 
     /**
      * Lógica para generar tickets walk-in automáticamente

@@ -57,6 +57,7 @@ class MedicalRecordResource extends Resource
             MedicalDocumentsRelationManager::class,
             NursingAssessmentRelationManager::class,
             PrescriptionsRelationManager::class,
+            \App\Filament\Resources\MedicalRecords\RelationManagers\ActivityLogRelationManager::class,
         ];
     }
 

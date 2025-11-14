@@ -5,6 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\DB;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Models\Activity;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 // Enums
 use App\Enums\PatientType;
@@ -12,7 +16,7 @@ use App\Enums\EmployeeStatus;
 
 class MedicalRecord extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'patient_id',
@@ -71,5 +75,34 @@ class MedicalRecord extends Model
     {
         return $this->hasMany(Prescription::class);
     }
-}
 
+    public function activities(): MorphMany
+    {
+        return $this->morphMany(Activity::class, 'subject');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('medical')
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
+
+    public function descriptionForEvent(string $eventName): string
+    {
+        return "Expediente {$eventName}";
+    }
+
+    public function tapActivity(Activity $activity, string $eventName): void
+    {
+        $activity->properties = array_merge($activity->properties->toArray(), [
+            'medical_record_id' => $this->id,
+            'ip' => request()->ip(),
+            'user_agent' => substr((string) request()->userAgent(), 0, 255),
+            'route' => optional(request()->route())->getName(),
+            'causer_role' => optional($activity->causer)->role?->value,
+        ]);
+    }
+}
