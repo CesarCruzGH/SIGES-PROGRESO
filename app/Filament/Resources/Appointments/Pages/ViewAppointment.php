@@ -22,7 +22,13 @@ use Filament\Infolists;
 use Filament\Infolists\Components\Section as InfoSection;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\RepeatableEntry;
-
+use Filament\Schemas\Components\Section;
+use App\Models\NursingEvolution;
+use App\Models\SomatometricReading;
+use App\Models\VitalSign;
+use App\Enums\VisitType;
+use App\Models\MedicalInitialAssessment;
+use App\Models\NursingAssessmentInitial;
 class ViewAppointment extends ViewRecord
 {
     protected static string $resource = AppointmentResource::class;
@@ -134,6 +140,159 @@ class ViewAppointment extends ViewRecord
                     'prescriptionId' => Prescription::where('medical_record_id', $this->record->medical_record_id)->orderByDesc('id')->value('id'),
                     'copyType' => 'institution',
                 ])),
+
+            Action::make('register_nursing_initial')
+                ->label('Registrar Hoja Inicial de Enfermería')
+                ->icon('heroicon-o-clipboard-document-list')
+                ->color('warning')
+                ->visible(fn () => $this->record->visit_type === VisitType::PRIMERA_VEZ->value && $this->record->medicalRecord->nursingAssessmentInitial === null)
+                ->form([
+                    Section::make('Signos vitales')
+                        ->columns(3)
+                        ->schema([
+                            TextInput::make('blood_pressure_systolic')->label('PA sistólica')->numeric()->minValue(50)->maxValue(250),
+                            TextInput::make('blood_pressure_diastolic')->label('PA diastólica')->numeric()->minValue(30)->maxValue(150),
+                            TextInput::make('heart_rate')->label('FC')->numeric()->minValue(30)->maxValue(220),
+                            TextInput::make('respiratory_rate')->label('FR')->numeric()->minValue(6)->maxValue(40),
+                            TextInput::make('temperature')->label('Temp (°C)')->numeric()->minValue(30)->maxValue(45)->step('0.1'),
+                            TextInput::make('weight')->label('Peso (kg)')->numeric()->minValue(2)->maxValue(400)->step('0.1'),
+                            TextInput::make('height')->label('Talla (m)')->numeric()->minValue(0.5)->maxValue(2.5)->step('0.01'),
+                            TextInput::make('blood_glucose')->label('Glucosa')->numeric()->minValue(20)->maxValue(999),
+                            TextInput::make('oxygen_saturation')->label('SpO2 (%)')->numeric()->minValue(0)->maxValue(100),
+                            Textarea::make('observations')->label('Observaciones')->rows(3)->columnSpanFull(),
+                        ]),
+                    Textarea::make('notes')->label('Notas de enfermería')->rows(4),
+                ])
+                ->action(function (array $data): void {
+                    $owner = $this->record;
+                    $hasVitals = collect([
+                        'blood_pressure_systolic','blood_pressure_diastolic','heart_rate','respiratory_rate',
+                        'temperature','weight','height_cm','blood_glucose','oxygen_saturation','observations',
+                    ])->some(fn ($k) => isset($data[$k]) && $data[$k] !== null && $data[$k] !== '');
+
+                    $readingId = null;
+                    if ($hasVitals) {
+                        $reading = SomatometricReading::create([
+                            'medical_record_id' => $owner->medical_record_id,
+                            'appointment_id' => $owner->id,
+                            'user_id' => Auth::id(),
+                            'blood_pressure_systolic' => $data['blood_pressure_systolic'] ?? null,
+                            'blood_pressure_diastolic' => $data['blood_pressure_diastolic'] ?? null,
+                            'heart_rate' => $data['heart_rate'] ?? null,
+                            'respiratory_rate' => $data['respiratory_rate'] ?? null,
+                            'temperature' => $data['temperature'] ?? null,
+                            'weight' => $data['weight'] ?? null,
+                            'height' => isset($data['height_cm']) ? ($data['height_cm'] / 100) : null,
+                            'blood_glucose' => $data['blood_glucose'] ?? null,
+                            'oxygen_saturation' => $data['oxygen_saturation'] ?? null,
+                            'observations' => $data['observations'] ?? null,
+                        ]);
+                        $readingId = $reading->id;
+                    }
+
+                    NursingAssessmentInitial::create([
+                        'medical_record_id' => $owner->medical_record_id,
+                        'user_id' => Auth::id(),
+                        'somatometric_reading_id' => $readingId,
+                        'notes' => $data['notes'] ?? null,
+                    ]);
+
+                    Notification::make()->title('Hoja inicial de enfermería registrada')->success()->send();
+                    $this->redirect(AppointmentResource::getUrl('view', ['record' => $owner]));
+                }),
+
+            Action::make('register_medical_initial')
+                ->label('Registrar Hoja Inicial Médica')
+                ->icon('heroicon-o-clipboard-document-check')
+                ->color('warning')
+                ->visible(fn () => $this->record->visit_type === VisitType::PRIMERA_VEZ->value && $this->record->medicalRecord->medicalInitialAssessment === null)
+                ->form([
+                    Textarea::make('allergies')->rows(3),
+                    Textarea::make('personal_pathological_history')->rows(4),
+                    Textarea::make('gyneco_obstetric_history')->rows(4),
+                    Textarea::make('current_illness')->rows(5),
+                    Textarea::make('physical_exam')->rows(5),
+                    Textarea::make('diagnosis')->rows(3),
+                    Textarea::make('treatment_note')->rows(3),
+                ])
+                ->action(function (array $data): void {
+                    $owner = $this->record;
+                    MedicalInitialAssessment::create(array_merge($data, [
+                        'medical_record_id' => $owner->medical_record_id,
+                        'user_id' => Auth::id(),
+                    ]));
+                    Notification::make()->title('Hoja inicial médica registrada')->success()->send();
+                    $this->redirect(AppointmentResource::getUrl('view', ['record' => $owner]));
+                }),
+
+            Action::make('register_nursing_evolution')
+                ->label('Registrar Evolución de Enfermería')
+                ->icon('heroicon-o-document-plus')
+                ->color('info')
+                ->visible(fn () => $this->record->visit_type === VisitType::SUBSECUENTE->value)
+                ->form([
+                    Textarea::make('problem')->label('P'),
+                    Textarea::make('subjective')->label('S'),
+                    Textarea::make('objective')->label('O'),
+                    Textarea::make('analysis')->label('A'),
+                    Textarea::make('plan')->label('P'),
+                    Section::make('Signos vitales')
+                        ->columns(3)
+                        ->schema([
+                            TextInput::make('blood_pressure_systolic')->label('PA sistólica')->numeric()->minValue(50)->maxValue(250),
+                            TextInput::make('blood_pressure_diastolic')->label('PA diastólica')->numeric()->minValue(30)->maxValue(150),
+                            TextInput::make('heart_rate')->label('FC')->numeric()->minValue(30)->maxValue(220),
+                            TextInput::make('respiratory_rate')->label('FR')->numeric()->minValue(6)->maxValue(40),
+                            TextInput::make('temperature')->label('Temp (°C)')->numeric()->minValue(30)->maxValue(45)->step('0.1'),
+                            TextInput::make('weight')->label('Peso (kg)')->numeric()->minValue(2)->maxValue(400)->step('0.1'),
+                            TextInput::make('height')->label('Talla (m)')->numeric()->minValue(0.5)->maxValue(2.5)->step('0.01'),
+                            TextInput::make('blood_glucose')->label('Glucosa')->numeric()->minValue(20)->maxValue(999),
+                            TextInput::make('oxygen_saturation')->label('SpO2 (%)')->numeric()->minValue(0)->maxValue(100),
+                            Textarea::make('observations')->label('Observaciones')->rows(3)->columnSpanFull(),
+                        ]),
+                ])
+                ->action(function (array $data): void {
+                    $owner = $this->record;
+                    $hasVitals = collect([
+                        'blood_pressure_systolic','blood_pressure_diastolic','heart_rate','respiratory_rate',
+                        'temperature','weight','height_cm','blood_glucose','oxygen_saturation','observations',
+                    ])->some(fn ($k) => isset($data[$k]) && $data[$k] !== null && $data[$k] !== '');
+
+                    $readingId = null;
+                    if ($hasVitals) {
+                        $reading = SomatometricReading::create([
+                            'medical_record_id' => $owner->medical_record_id,
+                            'appointment_id' => $owner->id,
+                            'user_id' => Auth::id(),
+                            'blood_pressure_systolic' => $data['blood_pressure_systolic'] ?? null,
+                            'blood_pressure_diastolic' => $data['blood_pressure_diastolic'] ?? null,
+                            'heart_rate' => $data['heart_rate'] ?? null,
+                            'respiratory_rate' => $data['respiratory_rate'] ?? null,
+                            'temperature' => $data['temperature'] ?? null,
+                            'weight' => $data['weight'] ?? null,
+                            'height' => isset($data['height_cm']) ? ($data['height_cm'] / 100) : null,
+                            'blood_glucose' => $data['blood_glucose'] ?? null,
+                            'oxygen_saturation' => $data['oxygen_saturation'] ?? null,
+                            'observations' => $data['observations'] ?? null,
+                        ]);
+                        $readingId = $reading->id;
+                    }
+
+                    NursingEvolution::create([
+                        'medical_record_id' => $owner->medical_record_id,
+                        'appointment_id' => $owner->id,
+                        'user_id' => Auth::id(),
+                        'problem' => $data['problem'] ?? null,
+                        'subjective' => $data['subjective'] ?? null,
+                        'objective' => $data['objective'] ?? null,
+                        'analysis' => $data['analysis'] ?? null,
+                        'plan' => $data['plan'] ?? null,
+                        'somatometric_reading_id' => $readingId,
+                    ]);
+
+                    Notification::make()->title('Evolución de enfermería registrada')->success()->send();
+                    $this->redirect(AppointmentResource::getUrl('view', ['record' => $owner]));
+                }),
         ];
     }
 

@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Storage;
 class MedicalDocumentsRelationManager extends RelationManager
 {
     protected static string $relationship = 'medicalDocuments';
+    protected static ?string $title = 'Documentos Médicos';
 
     public function form(Schema $schema): Schema
     {
@@ -67,7 +68,8 @@ class MedicalDocumentsRelationManager extends RelationManager
                 Action::make('download')
                     ->label('Descargar')
                     ->icon('heroicon-o-arrow-down-tray')
-                    ->action(fn ($record) => response()->redirectTo(Storage::disk('public')->path($record->file_path))),
+                    ->url(fn ($record) => asset('storage/' . $record->file_path))
+                    ->openUrlInNewTab(),
                 EditAction::make(),
                 DeleteAction::make(),
             ])

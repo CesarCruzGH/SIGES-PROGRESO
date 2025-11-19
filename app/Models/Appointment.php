@@ -155,4 +155,9 @@ class Appointment extends Model
     {
         return $this->belongsTo(ClinicSchedule::class);
     }
+
+    public function nursingEvolutions()
+    {
+        return $this->hasMany(NursingEvolution::class);
+    }
 }

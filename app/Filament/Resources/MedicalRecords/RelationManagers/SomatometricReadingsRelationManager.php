@@ -17,45 +17,34 @@ use Filament\Actions\EditAction;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Select;
-use App\Enums\AppointmentStatus;
 use Illuminate\Support\Facades\Auth;
-use App\Models\NursingAssessment;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Notifications\Notification;
 use Filament\Support\Exceptions\Halt;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
+use Filament\Infolists\Infolist;
+use Filament\Infolists\Components\Section as InfolistSection;
+use Filament\Infolists\Components\TextEntry;
 
 class SomatometricReadingsRelationManager extends RelationManager
 {
     protected static string $relationship = 'somatometricReadings';
-    protected static ?string $title = 'Historial de Somatometría';
-    
-    // Variable para almacenar la valoración inicial
-    protected ?NursingAssessment $nursingAssessment = null;
-    
-    protected function setUp(): void
-    {
-        parent::setUp();
-        
-        $this->afterMount(function (): void {
-            // Cargar la valoración inicial de enfermería solo si hay un registro propietario
-            if ($this->getOwnerRecord()) {
-                $this->nursingAssessment = NursingAssessment::where('medical_record_id', $this->getOwnerRecord()->id)->first();
-            }
-        });
-    }
+    protected static ?string $title = 'Notas de Evolución Somatométrica';
 
     public static function getFormSchema(): array
     {
         return [
-            TextInput::make('blood_pressure_systolic')->label('Presión Sistólica (mmHg)')->numeric(),
-            TextInput::make('blood_pressure_diastolic')->label('Presión Diastólica (mmHg)')->numeric(),
-            TextInput::make('heart_rate')->label('Frecuencia Cardíaca (lpm)')->numeric(),
-            TextInput::make('temperature')->label('Temperatura (°C)')->numeric(),
-            TextInput::make('weight')->label('Peso (kg)')->numeric(),
-            TextInput::make('height')->label('Talla (m)')->numeric(),
-            Textarea::make('observations')->label('Observaciones')->columnSpanFull(),
+            TextInput::make('blood_pressure_systolic')->label('Presión Sistólica (mmHg)')->numeric()->minValue(60)->maxValue(250)->step('1'),
+            TextInput::make('blood_pressure_diastolic')->label('Presión Diastólica (mmHg)')->numeric()->minValue(40)->maxValue(150)->step('1'),
+            TextInput::make('heart_rate')->label('Frecuencia Cardíaca (lpm)')->numeric()->minValue(30)->maxValue(220)->step('1'),
+            TextInput::make('temperature')->label('Temperatura (°C)')->numeric()->minValue(25)->maxValue(45)->step('0.1'),
+            TextInput::make('respiratory_rate')->label('Frecuencia Respiratoria (rpm)')->numeric()->minValue(5)->maxValue(60)->step('1'),
+            TextInput::make('oxygen_saturation')->label('SpO₂ (%)')->numeric()->minValue(50)->maxValue(100)->step('1'),
+            TextInput::make('weight')->label('Peso (kg)')->numeric()->minValue(2)->maxValue(400)->step('0.1'),
+            TextInput::make('height_cm')->label('Talla (cm)')->numeric()->minValue(30)->maxValue(250)->step('0.1'),
+            TextInput::make('blood_glucose')->label('Glucosa (mg/dL)')->numeric()->minValue(20)->maxValue(600)->step('1'),
+            Textarea::make('observations')->label('Nota de evolución')->columnSpanFull(),
         ];
     }
 
@@ -63,13 +52,16 @@ class SomatometricReadingsRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                TextInput::make('blood_pressure_systolic')->label('Presión Sistólica (mmHg)')->numeric(),
-                TextInput::make('blood_pressure_diastolic')->label('Presión Diastólica (mmHg)')->numeric(),
-                TextInput::make('heart_rate')->label('Frecuencia Cardíaca (lpm)')->numeric(),
-                TextInput::make('temperature')->label('Temperatura (°C)')->numeric(),
-                TextInput::make('weight')->label('Peso (kg)')->numeric(),
-                TextInput::make('height')->label('Talla (m)')->numeric(),
-                Textarea::make('observations')->label('Observaciones')->columnSpanFull(),
+                TextInput::make('blood_pressure_systolic')->label('Presión Sistólica (mmHg)')->numeric()->minValue(60)->maxValue(250)->step('1'),
+                TextInput::make('blood_pressure_diastolic')->label('Presión Diastólica (mmHg)')->numeric()->minValue(40)->maxValue(150)->step('1'),
+                TextInput::make('heart_rate')->label('Frecuencia Cardíaca (lpm)')->numeric()->minValue(30)->maxValue(220)->step('1'),
+                TextInput::make('temperature')->label('Temperatura (°C)')->numeric()->minValue(25)->maxValue(45)->step('0.1'),
+                TextInput::make('respiratory_rate')->label('Frecuencia Respiratoria (rpm)')->numeric()->minValue(5)->maxValue(60)->step('1'),
+                TextInput::make('oxygen_saturation')->label('SpO₂ (%)')->numeric()->minValue(50)->maxValue(100)->step('1'),
+                TextInput::make('weight')->label('Peso (kg)')->numeric()->minValue(2)->maxValue(400)->step('0.1'),
+                TextInput::make('height_cm')->label('Talla (cm)')->numeric()->minValue(30)->maxValue(250)->step('0.1'),
+                TextInput::make('blood_glucose')->label('Glucosa (mg/dL)')->numeric()->minValue(20)->maxValue(600)->step('1'),
+                Textarea::make('observations')->label('Nota de evolución')->columnSpanFull(),
             ]);
     }
 
@@ -81,17 +73,6 @@ class SomatometricReadingsRelationManager extends RelationManager
                 return $query;
             })
             ->columns([
-                IconColumn::make('is_initial_assessment')
-                    ->label('Tipo')
-                    ->boolean()
-                    ->trueIcon('heroicon-o-star')
-                    ->falseIcon('heroicon-o-clipboard')
-                    ->trueColor('warning')
-                    ->falseColor('gray')
-                    ->getStateUsing(function ($record) {
-                        return false; // Registros normales
-                    })
-                    ->tooltip(fn ($state) => $state ? 'Valoración Inicial' : 'Registro Diario'),
                 TextColumn::make('created_at')
                     ->label('Fecha de Toma')
                     ->dateTime('d/m/Y H:i a')
@@ -102,91 +83,88 @@ class SomatometricReadingsRelationManager extends RelationManager
                 TextColumn::make('weight')
                     ->label('Peso')
                     ->suffix(' kg'),
-                TextColumn::make('height')
+                TextColumn::make('height_cm')
                     ->label('Talla')
-                    ->suffix(' m'),
+                    ->getStateUsing(fn ($record) => $record->height !== null ? number_format($record->height * 100, 1) . ' cm' : '—'),
+                TextColumn::make('temperature')
+                    ->label('Temp')
+                    ->suffix(' °C'),
+                TextColumn::make('heart_rate')
+                    ->label('FC')
+                    ->suffix(' lpm'),
+                TextColumn::make('respiratory_rate')
+                    ->label('FR')
+                    ->suffix(' rpm'),
+                TextColumn::make('oxygen_saturation')
+                    ->label('SpO₂')
+                    ->suffix(' %'),
+                TextColumn::make('blood_glucose')
+                    ->label('Glucosa')
+                    ->suffix(' mg/dL'),
+                TextColumn::make('observations')
+                    ->label('Nota')
+                    ->limit(40),
                 TextColumn::make('user.name')->label('Registrado por'),
             ])
             ->headerActions([
                 CreateAction::make()
                 ->mutateFormDataUsing(function (array $data): array {
                     $data['user_id'] = Auth::id(); // Asigna al usuario actual
+                    if (isset($data['height_cm'])) {
+                        $data['height'] = is_numeric($data['height_cm']) ? ($data['height_cm'] / 100) : null;
+                        unset($data['height_cm']);
+                    }
                     return $data;
                 }),
-                // Acción para ver la valoración inicial
-                ViewAction::make('viewInitialAssessment')
-                    ->label('Ver Valoración Inicial')
-                    ->icon('heroicon-o-star')
-                    ->color('warning')
-                    ->visible(fn () => $this->nursingAssessment !== null)
-                    ->modalHeading('Valoración Inicial de Enfermería')
-                    ->modalDescription('Datos registrados en la primera consulta del paciente')
-                    ->modalIcon('heroicon-o-star')
-                    ->schema(function () {
-                        $nursingAssessment = $this->nursingAssessment;
-                        
-                        return [
-                            Section::make('Datos Somatométricos Iniciales')
-                                ->description('Valores registrados en la primera consulta')
-                                ->icon('heroicon-o-clipboard-document-list')
-                                ->schema([
-                                    Forms\Components\TextInput::make('blood_pressure_systolic')
-                                        ->label('Presión Sistólica (mmHg)')
-                                        ->default($nursingAssessment->blood_pressure_systolic ?? 'No registrado')
-                                        ->disabled(),
-                                    Forms\Components\TextInput::make('blood_pressure_diastolic')
-                                        ->label('Presión Diastólica (mmHg)')
-                                        ->default($nursingAssessment->blood_pressure_diastolic ?? 'No registrado')
-                                        ->disabled(),
-                                    Forms\Components\TextInput::make('heart_rate')
-                                        ->label('Frecuencia Cardíaca (lpm)')
-                                        ->default($nursingAssessment->heart_rate ?? 'No registrado')
-                                        ->disabled(),
-                                    Forms\Components\TextInput::make('temperature')
-                                        ->label('Temperatura (°C)')
-                                        ->default($nursingAssessment->temperature ?? 'No registrado')
-                                        ->disabled(),
-                                    Forms\Components\TextInput::make('weight')
-                                        ->label('Peso (kg)')
-                                        ->default($nursingAssessment->weight ?? 'No registrado')
-                                        ->disabled(),
-                                    Forms\Components\TextInput::make('height')
-                                        ->label('Talla (m)')
-                                        ->default($nursingAssessment->height ?? 'No registrado')
-                                        ->disabled(),
-                                ]),
-                            Section::make('Información Clínica')
-                                ->description('Antecedentes y alergias')
-                                ->icon('heroicon-o-clipboard-document-check')
-                                ->schema([
-                                    Forms\Components\Textarea::make('allergies')
-                                        ->label('Alergias')
-                                        ->default($nursingAssessment->allergies ?? 'No registrado')
-                                        ->disabled(),
-                                    Forms\Components\Textarea::make('personal_pathological_history')
-                                        ->label('Antecedentes Patológicos Personales')
-                                        ->default($nursingAssessment->personal_pathological_history ?? 'No registrado')
-                                        ->disabled(),
-                                ]),
-                            Section::make('Información de Registro')
-                                ->schema([
-                                    Forms\Components\TextInput::make('created_at')
-                                        ->label('Fecha de Registro')
-                                        ->default($nursingAssessment ? $nursingAssessment->created_at->format('d/m/Y H:i a') : 'No registrado')
-                                        ->disabled(),
-                                    Forms\Components\TextInput::make('user')
-                                        ->label('Registrado por')
-                                        ->default($nursingAssessment && $nursingAssessment->user ? $nursingAssessment->user->name : 'No registrado')
-                                        ->disabled(),
-                                ]),
-                        ];
-                    })
-                    ->action(function () {
-                        // Solo cerrar el modal
-                    }),
             ])
 
             ->recordActions([
+                ViewAction::make()
+                    ->modalHeading('Detalle de Nota Somatométrica')
+                    ->infolist(function (Schema $schema) {
+                        return $schema->schema([
+                            Section::make('Signos vitales')
+                                ->icon('heroicon-o-clipboard-document-list')
+                                ->schema([
+                                    TextEntry::make('created_at')
+                                        ->label('Fecha de Toma')
+                                        ->state(fn ($record) => $record->created_at ? $record->created_at->format('d/m/Y H:i a') : '—'),
+                                    TextEntry::make('blood_pressure')
+                                        ->label('Presión Arterial (mmHg)')
+                                        ->state(fn ($record) => ($record->blood_pressure_systolic ?? '—') . '/' . ($record->blood_pressure_diastolic ?? '—')),
+                                    TextEntry::make('heart_rate')
+                                        ->label('Frecuencia Cardíaca (lpm)')
+                                        ->state(fn ($record) => $record->heart_rate ?? '—'),
+                                    TextEntry::make('respiratory_rate')
+                                        ->label('Frecuencia Respiratoria (rpm)')
+                                        ->state(fn ($record) => $record->respiratory_rate ?? '—'),
+                                    TextEntry::make('temperature')
+                                        ->label('Temperatura (°C)')
+                                        ->state(fn ($record) => $record->temperature ?? '—'),
+                                    TextEntry::make('oxygen_saturation')
+                                        ->label('SpO₂ (%)')
+                                        ->state(fn ($record) => $record->oxygen_saturation ?? '—'),
+                                    TextEntry::make('weight')
+                                        ->label('Peso (kg)')
+                                        ->state(fn ($record) => $record->weight ?? '—'),
+                                    TextEntry::make('height_cm')
+                                        ->label('Talla (cm)')
+                                        ->state(fn ($record) => isset($record->height) ? number_format($record->height * 100, 1) : '—'),
+                                    TextEntry::make('blood_glucose')
+                                        ->label('Glucosa (mg/dL)')
+                                        ->state(fn ($record) => $record->blood_glucose ?? '—'),
+                                ]),
+                            Section::make('Nota de evolución')
+                                ->schema([
+                                    TextEntry::make('observations')
+                                        ->label('Nota')
+                                        ->state(fn ($record) => $record->observations ?? '—'),
+                                    TextEntry::make('user_name')
+                                        ->label('Registrado por')
+                                        ->state(fn ($record) => $record->user ? $record->user->name : '—'),
+                                ]),
+                        ]);
+                    }),
                 EditAction::make(),
                 DeleteAction::make(),
             ]);

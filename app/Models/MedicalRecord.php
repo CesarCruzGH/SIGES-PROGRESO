@@ -76,6 +76,16 @@ class MedicalRecord extends Model
         return $this->hasMany(Prescription::class);
     }
 
+    public function nursingAssessmentInitial()
+    {
+        return $this->hasOne(NursingAssessmentInitial::class);
+    }
+
+    public function medicalInitialAssessment()
+    {
+        return $this->hasOne(MedicalInitialAssessment::class);
+    }
+
     public function activities(): MorphMany
     {
         return $this->morphMany(Activity::class, 'subject');
