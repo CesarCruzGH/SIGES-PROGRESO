@@ -63,12 +63,12 @@ class RecepcionStats extends BaseWidget
 
         $mujeres = $appointmentsWithPatients->filter(function ($a) {
             $p = $a->medicalRecord->patient ?? null;
-            return $p && $p->sex === 'Femenino';
+            return $p && $p->sex === 'F';
         })->count();
 
         $hombres = $appointmentsWithPatients->filter(function ($a) {
             $p = $a->medicalRecord->patient ?? null;
-            return $p && $p->sex === 'Masculino';
+            return $p && $p->sex === 'M';
         })->count();
 
 

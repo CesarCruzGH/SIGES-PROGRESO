@@ -21,7 +21,7 @@ class ApexTiposDePacienteChart extends ApexChartWidget
      *
      * @var string|null
      */
-    protected static ?string $heading = 'Tipos de Paciente (Apex)';
+    protected static ?string $heading = 'Tipos de Paciente';
 
     /**
      * Preferred content height

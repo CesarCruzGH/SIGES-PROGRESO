@@ -22,7 +22,7 @@ class ApexVisitasPorMedicoChart extends ApexChartWidget
      *
      * @var string|null
      */
-    protected static ?string $heading = 'Visitas por médico (Apex)';
+    protected static ?string $heading = 'Visitas por médico';
 
     /**
      * Preferred content height
@@ -58,7 +58,7 @@ class ApexVisitasPorMedicoChart extends ApexChartWidget
             default => 'periodo',
         };
 
-        return 'Visitas atendidas por médico — ' . $periodName . ' (Apex)';
+        return 'Visitas atendidas por médico — ' . $periodName . '';
     }
 
     /**

@@ -74,6 +74,10 @@ class NursingEvolutionsRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make()
+                    ->label('Crear Evolución de Enfermería')
+                    ->modalHeading('Registrar Evolución de Enfermería')
+                    ->modalSubmitActionLabel('Guardar')
+                    ->modalCancelActionLabel('Cancelar')
                     ->mutateFormDataUsing(function (array $data): array {
                         $owner = $this->getOwnerRecord(); // Appointment
                         $hasVitals = collect([

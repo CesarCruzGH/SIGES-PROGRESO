@@ -23,7 +23,7 @@ class ApexPacientesNuevosVSRecurrentes extends ApexChartWidget
      *
      * @var string|null
      */
-    protected static ?string $heading = 'Pacientes nuevos vs recurrentes (Apex)';
+    protected static ?string $heading = 'Pacientes nuevos vs recurrentes';
 
     /**
      * Preferred content height
@@ -59,7 +59,7 @@ class ApexPacientesNuevosVSRecurrentes extends ApexChartWidget
             default => 'periodo',
         };
 
-        return 'Nuevos vs recurrentes — ' . $periodName . ' (Apex)';
+        return 'Nuevos vs recurrentes — ' . $periodName . '';
     }
 
     /**

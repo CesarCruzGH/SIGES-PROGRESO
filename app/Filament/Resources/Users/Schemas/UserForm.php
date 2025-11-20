@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
+use App\Enums\UserRole;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
@@ -27,13 +28,7 @@ class UserForm
                 ->schema([
                     Select::make('role')
                         ->label('Función')
-                        ->options([
-                            'admin' => 'Administrador',
-                            'doctor' => 'Doctor',
-                            'enfermero' => 'Enfermero',
-                            'recepcionista' => 'Recepcionista',
-                            // agregar más roles aquí
-            ])
+                        ->options(UserRole::class)
             ->placeholder('Seleccione una función')
             ->required(),
                 ])

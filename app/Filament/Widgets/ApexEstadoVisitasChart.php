@@ -22,7 +22,7 @@ class ApexEstadoVisitasChart extends ApexChartWidget
      *
      * @var string|null
      */
-    protected static ?string $heading = 'Estado de las visitas (Apex)';
+    protected static ?string $heading = 'Estado de las visitas';
 
     /**
      * Preferred content height
@@ -60,7 +60,7 @@ class ApexEstadoVisitasChart extends ApexChartWidget
             default => 'periodo',
         };
 
-        return 'Estado de las visitas — ' . $periodName . ' (Apex)';
+        return 'Estado de las visitas — ' . $periodName . '';
     }
 
     /**

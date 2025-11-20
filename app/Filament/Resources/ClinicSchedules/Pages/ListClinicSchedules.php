@@ -46,8 +46,8 @@ class ListClinicSchedules extends ListRecords
                 ->action(function (array $data) {
                     $notes = $data['closing_notes'] ?? null;
                     $openShifts = ClinicSchedule::query()
-                        ->whereDate('date', today())
                         ->where('is_shift_open', true)
+                        ->whereDate('shift_opened_at', today())
                         ->get();
 
                     $closed = 0;
@@ -125,6 +125,7 @@ class ListClinicSchedules extends ListRecords
                             ->send();
                     }
                 }),
+                /*
                 Action::make('cerrar_jornada')
                 ->label('Cerrar Jornada')
                 ->icon('heroicon-o-lock-closed')
@@ -142,6 +143,7 @@ class ListClinicSchedules extends ListRecords
                         ->success()
                         ->send();
                 }),
+                */
         ];
     }
 }

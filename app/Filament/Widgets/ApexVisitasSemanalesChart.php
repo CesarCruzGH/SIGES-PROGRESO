@@ -22,7 +22,7 @@ class ApexVisitasSemanalesChart extends ApexChartWidget
      *
      * @var string|null
      */
-    protected static ?string $heading = 'Visitas semanales (Apex)';
+    protected static ?string $heading = 'Visitas semanales';
 
     /**
      * Preferred content height

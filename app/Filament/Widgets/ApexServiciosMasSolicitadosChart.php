@@ -22,7 +22,7 @@ class ApexServiciosMasSolicitadosChart extends ApexChartWidget
      *
      * @var string|null
      */
-    protected static ?string $heading = 'Servicios más solicitados (Apex)';
+    protected static ?string $heading = 'Servicios más solicitados';
 
     /**
      * Preferred content height
@@ -58,7 +58,7 @@ class ApexServiciosMasSolicitadosChart extends ApexChartWidget
             default => 'periodo',
         };
 
-        return 'Servicios más solicitados — ' . $periodName . ' (Apex)';
+        return 'Servicios más solicitados — ' . $periodName . '';
     }
 
     /**

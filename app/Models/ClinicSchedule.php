@@ -36,6 +36,24 @@ class ClinicSchedule extends Model
         'shift' => Shift::class,
     ];
 
+    protected static function booted(): void
+    {
+        static::updating(function (ClinicSchedule $model) {
+            if ($model->isDirty('is_active') && $model->is_active) {
+                $today = now()->toDateString();
+                $exists = static::query()
+                    ->where('clinic_name', $model->clinic_name)
+                    ->where('shift', $model->shift)
+                    ->whereDate('date', $today)
+                    ->where('id', '!=', $model->id)
+                    ->exists();
+                if (! $exists) {
+                    $model->date = $today;
+                }
+            }
+        });
+    }
+
     // A schedule belongs to one doctor (User)
     public function user(): BelongsTo
     {
@@ -67,14 +85,28 @@ class ClinicSchedule extends Model
             return false; // Ya está abierto
         }
 
-        $this->update([
-            // Asegura que el turno se considere del día actual
-            'date' => now()->toDateString(),
+        $data = [
             'is_shift_open' => true,
             'shift_opened_at' => now(),
             'opened_by' => $user->id,
             'opening_notes' => $notes,
-        ]);
+        ];
+
+        $today = now()->toDateString();
+        $currentDate = $this->date instanceof \Carbon\Carbon ? $this->date->toDateString() : (string) $this->date;
+        if ($currentDate !== $today) {
+            $exists = static::query()
+                ->where('clinic_name', $this->clinic_name)
+                ->where('shift', $this->shift)
+                ->whereDate('date', $today)
+                ->where('id', '!=', $this->id)
+                ->exists();
+            if (! $exists) {
+                $data['date'] = $today;
+            }
+        }
+
+        $this->update($data);
 
         return true;
     }
