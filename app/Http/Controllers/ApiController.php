@@ -33,9 +33,10 @@ class ApiController extends Controller
 
         $patientQuery = Patient::query();
 
-        if ($curp) {
-            $patientQuery->where('curp', $curp);
-        }
+          if ($curp) {
+              $curpHash = hash('sha256', strtoupper(trim($curp)));
+              $patientQuery->where('curp_hash', $curpHash);
+          }
         
         if ($recordNumber) {
             // Buscamos a través de la relación del expediente
