@@ -59,12 +59,12 @@
             <tbody>
                 @forelse(($prescription->items ?? []) as $item)
                     <tr>
-                        <td>{{ $item['medication'] ?? '' }}</td>
+                        <td>{{ $item['medication'] ?? ($item['drug'] ?? '') }}</td>
                         <td>{{ $item['dose'] ?? '' }}</td>
                         <td>{{ $item['frequency'] ?? '' }}</td>
                         <td>{{ $item['duration'] ?? '' }}</td>
                         <td>{{ $item['route'] ?? '' }}</td>
-                        <td>{{ $item['notes'] ?? '' }}</td>
+                        <td>{{ $item['notes'] ?? ($item['instructions'] ?? '') }}</td>
                     </tr>
                 @empty
                     <tr>

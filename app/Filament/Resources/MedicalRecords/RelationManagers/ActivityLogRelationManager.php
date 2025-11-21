@@ -18,10 +18,11 @@ class ActivityLogRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('description')->label('Acción')->wrap(),
                 Tables\Columns\TextColumn::make('causer.name')
                     ->label('Usuario')
-                    ->getStateUsing(fn ($record) => optional($record->causer)->name),
+                    ->getStateUsing(fn ($record) => optional($record->causer)->name)
+                    ->tooltip(fn ($record) => 'Rol: ' . ($record->properties['causer_role'] ?? '—') . ' • IP: ' . ($record->properties['ip'] ?? '—')),
                 Tables\Columns\TextColumn::make('created_at')->label('Fecha')->dateTime()->sortable(),
                 Tables\Columns\TextColumn::make('changes')
-                    ->label('Cambios')
+                    ->label('Cambios Realizados')
                     ->wrap()
                     ->toggleable()
                     ->getStateUsing(function ($record) {
@@ -30,7 +31,7 @@ class ActivityLogRelationManager extends RelationManager
                         $lines = [];
                         foreach ($new as $key => $newVal) {
                             $oldVal = $old[$key] ?? null;
-                            $lines[] = sprintf("%s: '%s' → '%s'", $key, $this->maskField($key, $oldVal), $this->maskField($key, $newVal));
+                            $lines[] = sprintf("%s: %s -> %s", $key, $this->maskField($key, $oldVal), $this->maskField($key, $newVal));
                         }
                         return implode("\n", $lines);
                     }),

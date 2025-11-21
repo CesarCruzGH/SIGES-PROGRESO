@@ -87,8 +87,17 @@ class QuickActionsWidget extends Widget implements HasForms
                         if (isset($data['tutor_id'])) {
                             $patientData['tutor_id'] = $data['tutor_id'];
                         }
-                        $patient = Patient::create($patientData);
-                        $medicalRecord = $patient->medicalRecord;
+                        $curpHash = isset($patientData['curp']) && $patientData['curp']
+                            ? hash('sha256', strtoupper(trim($patientData['curp'])))
+                            : null;
+                        $patient = null;
+                        if ($curpHash) {
+                            $patient = Patient::where('curp_hash', $curpHash)->first();
+                        }
+                        if (! $patient) {
+                            $patient = Patient::create($patientData);
+                        }
+                        $medicalRecord = $patient->medicalRecord()->first() ?? $patient->medicalRecord()->create();
                         $medicalRecord->update([
                             'patient_type' => $data['patient_type'],
                         ]);

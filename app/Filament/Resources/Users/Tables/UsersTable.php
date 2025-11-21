@@ -8,6 +8,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Actions\Action;
 use Filament\Schemas\Components\View;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
@@ -74,7 +75,33 @@ class UsersTable
             ->recordActions([
                 EditAction::make()->label('Editar'),
                 ViewAction::make()->label('Ver'),
-                DeleteAction::make()->label('Eliminar'),
+                Action::make('change_role')
+                    ->label('Cambiar Rol')
+                    ->form([
+                        \Filament\Forms\Components\Select::make('role')
+                            ->label('Nuevo rol')
+                            ->options(\App\Enums\UserRole::class)
+                            ->required(),
+                        \Filament\Forms\Components\TextInput::make('password')
+                            ->label('Contraseña actual')
+                            ->password()
+                            ->rule('current_password')
+                            ->required(),
+                    ])
+                    ->requiresConfirmation()
+                    ->action(function ($record, array $data) {
+                        $record->update(['role' => $data['role']]);
+                    }),
+                DeleteAction::make()
+                    ->label('Eliminar')
+                    ->requiresConfirmation()
+                    ->form([
+                        \Filament\Forms\Components\TextInput::make('password')
+                            ->label('Contraseña actual')
+                            ->password()
+                            ->rule('current_password')
+                            ->required(),
+                    ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

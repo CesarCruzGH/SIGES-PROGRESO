@@ -15,7 +15,15 @@ class EditMedicalRecord extends EditRecord
     {
         return [
             ViewAction::make(),
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->requiresConfirmation()
+                ->form([
+                    \Filament\Forms\Components\TextInput::make('password')
+                        ->label('Contraseña actual')
+                        ->password()
+                        ->rule('current_password')
+                        ->required(),
+                ]),
         ];
     }
 }

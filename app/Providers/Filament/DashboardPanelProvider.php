@@ -39,6 +39,7 @@ class DashboardPanelProvider extends PanelProvider
             ->id('dashboard')
             ->path('dashboard')
             ->login()
+            ->profile()
             ->databaseNotifications()
             ->databaseNotificationsPolling('10s') // Revisa si hay notificaciones nuevas cada 10 segundos
             ->sidebarCollapsibleOnDesktop()
@@ -57,6 +58,7 @@ class DashboardPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->pages([
                 \App\Filament\Pages\ReceptionDashboard::class,
+                \App\Filament\Pages\SecuritySettings::class,
             ])
             ->widgets([
                 // Sin widgets por defecto en el cuerpo del dashboard;
@@ -73,6 +75,7 @@ class DashboardPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
                 'check.shift',
+                'twofactor.verify',
             ])
             ->authMiddleware([
                 Authenticate::class,

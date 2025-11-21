@@ -10,6 +10,7 @@
         "asmit/filament-upload": "^1.1",
         "barryvdh/laravel-dompdf": "^3.1",
         "filament/filament": "4.0",
+        "laravel/fortify": "^1.31",
         "laravel/framework": "^11.31",
         "laravel/sanctum": "^4.2",
         "laravel/tinker": "^2.9",
@@ -18,6 +19,7 @@
         "spatie/laravel-activitylog": "^4.10"
     },
     "require-dev": {
+        "barryvdh/laravel-ide-helper": "*",
         "fakerphp/faker": "^1.23",
         "laravel/pail": "^1.1",
         "laravel/pint": "^1.13",

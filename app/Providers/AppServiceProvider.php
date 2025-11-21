@@ -21,7 +21,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $router = app('router');
+        $router->aliasMiddleware('twofactor.verify', \App\Http\Middleware\RequireTwoFactorVerified::class);
 
     }
 }

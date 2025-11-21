@@ -16,8 +16,8 @@ class MedicalRecordInfolist
                     ->columns(3)
                     ->schema([
                         TextEntry::make('record_number')->label('Número de Expediente'),
-                        TextEntry::make('patient_type')->badge(),
-                        TextEntry::make('employee_status')->badge(),
+                        TextEntry::make('patient_type')->badge()->label('Tipo de Paciente'),
+                        TextEntry::make('employee_status')->badge()->label('Estado del Empleado'),
                     ]),
                 Section::make('Datos del Paciente')
                     ->columns(2)

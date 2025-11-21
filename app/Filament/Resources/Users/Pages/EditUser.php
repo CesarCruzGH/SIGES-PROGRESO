@@ -13,7 +13,15 @@ class EditUser extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->requiresConfirmation()
+                ->form([
+                    \Filament\Forms\Components\TextInput::make('password')
+                        ->label('Contraseña actual')
+                        ->password()
+                        ->rule('current_password')
+                        ->required(),
+                ]),
         ];
     }
 }

@@ -5,6 +5,7 @@ namespace App\Filament\Resources\MedicalRecords\Tables;
 use App\Enums\PatientType;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\BadgeColumn;
@@ -65,6 +66,16 @@ class MedicalRecordsTable
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+                DeleteAction::make()
+                    ->label('Eliminar')
+                    ->requiresConfirmation()
+                    ->form([
+                        \Filament\Forms\Components\TextInput::make('password')
+                            ->label('Contraseña actual')
+                            ->password()
+                            ->rule('current_password')
+                            ->required(),
+                    ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
