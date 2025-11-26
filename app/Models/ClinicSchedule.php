@@ -79,7 +79,7 @@ class ClinicSchedule extends Model
     }
 
     // Métodos útiles para el control de turnos
-    public function openShift(User $user, ?string $notes = null): bool
+    public function openShift(User $user, ?string $notes = null, bool $forceToday = false): bool
     {
         if ($this->is_shift_open) {
             return false; // Ya está abierto
@@ -95,14 +95,18 @@ class ClinicSchedule extends Model
         $today = now()->toDateString();
         $currentDate = $this->date instanceof \Carbon\Carbon ? $this->date->toDateString() : (string) $this->date;
         if ($currentDate !== $today) {
-            $exists = static::query()
-                ->where('clinic_name', $this->clinic_name)
-                ->where('shift', $this->shift)
-                ->whereDate('date', $today)
-                ->where('id', '!=', $this->id)
-                ->exists();
-            if (! $exists) {
+            if ($forceToday) {
                 $data['date'] = $today;
+            } else {
+                $exists = static::query()
+                    ->where('clinic_name', $this->clinic_name)
+                    ->where('shift', $this->shift)
+                    ->whereDate('date', $today)
+                    ->where('id', '!=', $this->id)
+                    ->exists();
+                if (! $exists) {
+                    $data['date'] = $today;
+                }
             }
         }
 

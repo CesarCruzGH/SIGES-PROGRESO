@@ -30,7 +30,7 @@ class RecepcionStats extends BaseWidget
         $totalHoy = $todayStats->sum();
 
         $pacientesNuevos = Patient::where('status', 'pending_review')->count();
-        $turnosAbiertos = ClinicSchedule::where('is_active', true)->whereDate('date', today())->count();
+        $turnosAbiertos = ClinicSchedule::where('is_shift_open', true)->count();
 
         // --- 2. CONSULTA PARA LA MINI-GRÁFICA (AQUÍ ESTÁ LA CORRECCIÓN) ---
         $visitasSemanales = Appointment::query()
@@ -86,11 +86,11 @@ class RecepcionStats extends BaseWidget
                 ->color($pendientes > 0 ? 'danger' : 'success')
                 ->url(AppointmentResource::getUrl('index', ['tableTabs' => ['status' => AppointmentStatus::PENDING->value]])),
                 
-            Stat::make('Consultorios Activos', $turnosAbiertos)
-                ->description('Médicos disponibles para atender hoy')
+            Stat::make('Consultorios Abiertos', $turnosAbiertos)
+                ->description('Turnos abiertos actualmente')
                 ->descriptionIcon('heroicon-m-building-office')
                 ->color('info')
-                ->url(ClinicScheduleResource::getUrl('index')),
+                ->url(ClinicScheduleResource::getUrl('index', ['tab' => 'open'])),
 
             Stat::make('Total de Visitas Hoy', $totalHoy)
                 ->description('Tendencia de los últimos 7 días')

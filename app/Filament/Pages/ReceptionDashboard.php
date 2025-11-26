@@ -179,7 +179,7 @@ class ReceptionDashboard extends Dashboard
                 ])
                 ->action(function (array $data): void {
                     $schedule = ClinicSchedule::find($data['schedule_id']);
-                    if ($schedule && $schedule->openShift(Auth::user(), $data['opening_notes'] ?? null)) {
+                    if ($schedule && $schedule->openShift(Auth::user(), $data['opening_notes'] ?? null, true)) {
                         Notification::make()->title('Turno Abierto')->success()->send();
                         $this->redirect(url('/dashboard'));
                     } else {
@@ -191,6 +191,7 @@ class ReceptionDashboard extends Dashboard
                 ->label('Cerrar Turno')
                 ->icon('heroicon-m-stop')
                 ->color('danger')
+                ->visible(fn () => ClinicSchedule::query()->where('is_shift_open', true)->exists())
                 ->form([
                     Select::make('schedule_id')
                         ->label('Seleccionar Turno a Cerrar')

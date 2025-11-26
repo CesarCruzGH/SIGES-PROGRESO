@@ -70,7 +70,6 @@ class ApexPacientesNuevosVSRecurrentes extends ApexChartWidget
      */
     protected function getOptions(): array
     {
-        // Determinar rango y agrupación (día vs mes) según filtro
         $now = Carbon::now();
         $start = $now->copy()->startOfMonth();
         $end = $now->copy()->endOfMonth();
@@ -84,13 +83,9 @@ class ApexPacientesNuevosVSRecurrentes extends ApexChartWidget
             $end = $now->copy()->endOfYear();
             $groupByMonth = true;
         }
-
-        // Consulta: conteo de citas por periodo y tipo de visita (excluye canceladas)
-        // PostgreSQL: usar to_char para formatear periodo (mes o día)
         $selectPeriod = $groupByMonth
             ? DB::raw("to_char(date, 'YYYY-MM') as period")
             : DB::raw("to_char(date, 'YYYY-MM-DD') as period");
-
         $rows = Appointment::query()
             ->select($selectPeriod)
             ->addSelect('visit_type')

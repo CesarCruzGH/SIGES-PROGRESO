@@ -19,6 +19,7 @@ use Filament\Notifications\Notification;
 use App\Models\ClinicSchedule;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Filament\Schemas\Components\Tabs\Tab;
 
 class ListClinicSchedules extends ListRecords
 {
@@ -33,7 +34,7 @@ class ListClinicSchedules extends ListRecords
                 ->url(DaySchedule::getUrl())
                 ->color('primary'),
             Action::make('cerrar_turnos_abiertos')
-                ->label('Cerrar Turnos Abiertos (Hoy)')
+                ->label('Cerrar Turnos Abiertos (Todos)')
                 ->icon('heroicon-o-lock-closed')
                 ->color('danger')
                 ->form([
@@ -47,7 +48,6 @@ class ListClinicSchedules extends ListRecords
                     $notes = $data['closing_notes'] ?? null;
                     $openShifts = ClinicSchedule::query()
                         ->where('is_shift_open', true)
-                        ->whereDate('shift_opened_at', today())
                         ->get();
 
                     $closed = 0;
@@ -66,7 +66,7 @@ class ListClinicSchedules extends ListRecords
 
                     Notification::make()
                         ->title('Cierre de turnos')
-                        ->body("Se cerraron {$closed} turno(s) abierto(s) de hoy." . ($errors > 0 ? " Errores: {$errors}." : ''))
+                        ->body("Se cerraron {$closed} turno(s) abierto(s)." . ($errors > 0 ? " Errores: {$errors}." : ''))
                         ->success()
                         ->send();
                 }),
@@ -145,5 +145,41 @@ class ListClinicSchedules extends ListRecords
                 }),
                 */
         ];
+    }
+
+    public function getTabs(): array
+    {
+        $tabs = [
+            'all' => Tab::make('Todas las Asignaciones')
+                ->icon('heroicon-o-rectangle-stack')
+                ->badge(ClinicScheduleResource::getModel()::query()->count())
+                ->badgeColor('gray'),
+
+            'open' => Tab::make('Abiertos')
+                ->icon('heroicon-o-clock')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('is_shift_open', true))
+                ->badge(ClinicScheduleResource::getModel()::query()->where('is_shift_open', true)->count())
+                ->badgeColor('success'),
+
+            'closed' => Tab::make('Cerrados')
+                ->icon('heroicon-o-lock-closed')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('is_shift_open', false))
+                ->badge(ClinicScheduleResource::getModel()::query()->where('is_shift_open', false)->count())
+                ->badgeColor('gray'),
+
+            'active' => Tab::make('Activos')
+                ->icon('heroicon-o-check-circle')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('is_active', true))
+                ->badge(ClinicScheduleResource::getModel()::query()->where('is_active', true)->count())
+                ->badgeColor('primary'),
+
+            'inactive' => Tab::make('No Activos')
+                ->icon('heroicon-o-no-symbol')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('is_active', false))
+                ->badge(ClinicScheduleResource::getModel()::query()->where('is_active', false)->count())
+                ->badgeColor('danger'),
+        ];
+
+        return $tabs;
     }
 }

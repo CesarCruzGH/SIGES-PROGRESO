@@ -28,17 +28,20 @@ class ClinicScheduleSeeder extends Seeder
             foreach ($dates as $date) {
                 foreach ($shifts as $shift) {
                     $isOpen = (bool) random_int(0, 1);
-                    ClinicSchedule::query()->create([
+                    $attributes = [
                         'clinic_name' => $clinic,
+                        'date' => $date,
+                        'shift' => $shift,
+                    ];
+                    $values = [
                         'user_id' => $doctorIds->random(),
                         'service_id' => $serviceIds->random(),
-                        'shift' => $shift,
-                        'date' => $date,
                         'is_active' => true,
                         'is_shift_open' => $isOpen,
                         'shift_opened_at' => $isOpen ? now() : null,
                         'opened_by' => $isOpen ? Arr::random($doctorIds->all()) : null,
-                    ]);
+                    ];
+                    ClinicSchedule::updateOrCreate($attributes, $values);
                 }
             }
         }

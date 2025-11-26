@@ -10,12 +10,15 @@ class NursingAssessmentSeeder extends Seeder
 {
     public function run(): void
     {
-        $records = MedicalRecord::query()->inRandomOrder()->take(ceil(MedicalRecord::query()->count() * 0.3))->get();
-        foreach ($records as $record) {
-            NursingAssessment::factory()->create([
-                'medical_record_id' => $record->id,
-            ]);
-        }
+        MedicalRecord::query()
+            ->doesntHave('nursingAssessment')
+            ->chunk(200, function ($records) {
+                foreach ($records as $record) {
+                    NursingAssessment::factory()->create([
+                        'medical_record_id' => $record->id,
+                    ]);
+                }
+            });
     }
 }
 

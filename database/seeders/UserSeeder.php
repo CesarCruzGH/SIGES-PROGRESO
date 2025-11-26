@@ -10,19 +10,41 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::factory()->admin()->create([
+        $adminData = User::factory()->admin()->make([
             'name' => 'Admin',
             'email' => 'admin@example.com',
-        ]);
+        ])->toArray();
+        User::updateOrCreate(['email' => $adminData['email']], $adminData);
 
-        User::factory()->receptionist()->create([
+        $recepData = User::factory()->receptionist()->make([
             'name' => 'Recepción',
             'email' => 'recepcion@example.com',
-        ]);
+        ])->toArray();
+        User::updateOrCreate(['email' => $recepData['email']], $recepData);
 
-        User::factory()->count(2)->receptionist()->create();
-        User::factory()->count(6)->doctor()->create();
-        User::factory()->count(3)->nurse()->create();
+        $targets = [
+            UserRole::RECEPCIONISTA->value => 3, // incluye la fija anterior
+            UserRole::MEDICO_GENERAL->value => 6,
+            UserRole::ENFERMERO->value => 3,
+        ];
+
+        foreach ($targets as $roleValue => $target) {
+            $current = User::query()->where('role', $roleValue)->count();
+            $missing = max(0, $target - $current);
+            if ($missing === 0) continue;
+
+            switch ($roleValue) {
+                case UserRole::RECEPCIONISTA->value:
+                    User::factory()->count($missing)->receptionist()->create();
+                    break;
+                case UserRole::MEDICO_GENERAL->value:
+                    User::factory()->count($missing)->doctor()->create();
+                    break;
+                case UserRole::ENFERMERO->value:
+                    User::factory()->count($missing)->nurse()->create();
+                    break;
+            }
+        }
     }
 }
 

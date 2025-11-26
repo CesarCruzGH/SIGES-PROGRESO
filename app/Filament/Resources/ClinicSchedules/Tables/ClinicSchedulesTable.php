@@ -22,6 +22,7 @@ class ClinicSchedulesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->poll('5s')
             ->defaultSort('date', 'asc')
             ->columns([
                 TextColumn::make('clinic_name')

@@ -161,7 +161,7 @@ class QuickActionsWidget extends Widget implements HasForms
     public function openShiftAction(): Action
     {
         return Action::make('openShift')
-            ->label('Abrir Turno')
+            ->label('Abrir Turnodd')
             ->icon('heroicon-m-play')
             ->color('success')
             ->form([
