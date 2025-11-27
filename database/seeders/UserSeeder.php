@@ -5,21 +5,26 @@ namespace Database\Seeders;
 use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $adminData = User::factory()->admin()->make([
+        $adminData = [
             'name' => 'Admin',
             'email' => 'admin@example.com',
-        ])->toArray();
+            'password' => Hash::make('password'),
+            'role' => UserRole::ADMIN,
+        ];
         User::updateOrCreate(['email' => $adminData['email']], $adminData);
 
-        $recepData = User::factory()->receptionist()->make([
+        $recepData = [
             'name' => 'Recepción',
             'email' => 'recepcion@example.com',
-        ])->toArray();
+            'password' => Hash::make('password'),
+            'role' => UserRole::RECEPCIONISTA,
+        ];
         User::updateOrCreate(['email' => $recepData['email']], $recepData);
 
         $targets = [
@@ -47,4 +52,3 @@ class UserSeeder extends Seeder
         }
     }
 }
-
