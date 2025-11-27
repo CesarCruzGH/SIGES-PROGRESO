@@ -14,4 +14,5 @@ return [
     'url' => env('TURNOS_API_URL'),
 
     'token' => env('TURNOS_API_TOKEN'),
+    'enabled' => env('TURNOS_ENABLED', true), // Por defecto true en producción
 ];

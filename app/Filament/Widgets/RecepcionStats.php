@@ -87,7 +87,7 @@ class RecepcionStats extends BaseWidget
                 ->url(AppointmentResource::getUrl('index', ['tableTabs' => ['status' => AppointmentStatus::PENDING->value]])),
                 
             Stat::make('Consultorios Abiertos', $turnosAbiertos)
-                ->description('Turnos abiertos actualmente')
+                ->description('Consultorios abiertos actualmente')
                 ->descriptionIcon('heroicon-m-building-office')
                 ->color('info')
                 ->url(ClinicScheduleResource::getUrl('index', ['tab' => 'open'])),

@@ -8,12 +8,14 @@ use App\Jobs\SendTurnosTicketNotification;
 
 class AppointmentObserver
 {
-
     /**
      * Escenario 1: Se crea una nueva visita (ej. Ticket Local o API)
      */
     public function created(Appointment $appointment): void
     {
+        if (! config('turnos.enabled')) {
+            return;
+        }
         SendTurnosTicketNotification::dispatch(
             'new',
             [
@@ -23,11 +25,15 @@ class AppointmentObserver
                 'idServicio'    => $appointment->service_id, 
                 'service_name'  => $appointment->service->name ?? null, 
             ]
-        );
+        )->afterCommit();
     }
 
     public function updated(Appointment $appointment): void
     {
+        // --- CHIVATO DE SEGURIDAD ---
+        if (! config('turnos.enabled')) {
+            return;
+        }
             // --- CHIVATO 1 ---
         \Illuminate\Support\Facades\Log::info('Observer detectó actualización. Ticket: ' . $appointment->ticket_number);
 
@@ -63,7 +69,7 @@ class AppointmentObserver
                     'idServicio'  => $appointment->service_id,
                     'estado'      => 'en_consulta', // Valor fijo o dinámico según acuerdo
                 ]
-            );
+            )->afterCommit();
         }
 
         // --- Escenario 3: Fin de Consulta (Consulta -> Completado) ---
@@ -76,7 +82,7 @@ class AppointmentObserver
                     'estado' => 'Finalizado',
                     'clinic_name'   => $clinicName,
                 ]
-            );
+            )->afterCommit();
         }
 
         // --- Escenario 4: Cancelación ---
@@ -88,8 +94,7 @@ class AppointmentObserver
                     'ticket' => $appointment->ticket_number,
                     'estado' => 'Cancelado',
                 ]
-            );
+            )->afterCommit();
         }
     }
 }
-

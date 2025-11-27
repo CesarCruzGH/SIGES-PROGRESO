@@ -95,7 +95,7 @@ class Appointment extends Model
                 }
             }
         });
-
+/*
         static::updated(function (Appointment $appointment) {
             if ($appointment->wasChanged('status')) {
                 if ($appointment->status === AppointmentStatus::IN_PROGRESS) {
@@ -105,6 +105,7 @@ class Appointment extends Model
                 }
             }
         });
+        */
     }
 
     /**

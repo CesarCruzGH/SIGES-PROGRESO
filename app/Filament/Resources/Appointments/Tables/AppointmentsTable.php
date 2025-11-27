@@ -260,7 +260,7 @@ class AppointmentsTable
             ])
             ->headerActions([
                 CreateAction::make()->label('Crear Nueva Visita')->tooltip('Crear una nueva visita')
-                    ->visible(fn () => Auth::user()?->role?->value !== UserRole::MEDICO_GENERAL->value),
+                    ->visible(fn () => ! in_array(Auth::user()?->role?->value, [UserRole::MEDICO_GENERAL->value, UserRole::ENFERMERO->value], true)),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([

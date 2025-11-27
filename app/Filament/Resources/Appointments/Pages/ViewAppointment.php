@@ -187,7 +187,7 @@ class ViewAppointment extends ViewRecord
                 ->label('Imprimir receta (Paciente)')
                 ->icon('heroicon-o-printer')
                 ->color('primary')
-                ->visible(fn () => Prescription::where('medical_record_id', $this->record->medical_record_id)->exists())
+                ->visible(fn () => $this->record->status === AppointmentStatus::COMPLETED && Prescription::where('medical_record_id', $this->record->medical_record_id)->exists())
                 ->url(fn () => route('prescription.download', [
                     'prescriptionId' => Prescription::where('medical_record_id', $this->record->medical_record_id)->orderByDesc('id')->value('id'),
                     'copyType' => 'patient',
@@ -197,7 +197,7 @@ class ViewAppointment extends ViewRecord
                 ->label('Imprimir receta (Institución)')
                 ->icon('heroicon-o-printer')
                 ->color('gray')
-                ->visible(fn () => Prescription::where('medical_record_id', $this->record->medical_record_id)->exists())
+                ->visible(fn () => $this->record->status === AppointmentStatus::COMPLETED && Prescription::where('medical_record_id', $this->record->medical_record_id)->exists())
                 ->url(fn () => route('prescription.download', [
                     'prescriptionId' => Prescription::where('medical_record_id', $this->record->medical_record_id)->orderByDesc('id')->value('id'),
                     'copyType' => 'institution',

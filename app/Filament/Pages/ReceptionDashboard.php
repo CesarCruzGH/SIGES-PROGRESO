@@ -159,12 +159,12 @@ class ReceptionDashboard extends Dashboard
                 }),
 
             Action::make('openShift')
-                ->label('Abrir Turno')
+                ->label('Abrir Consultorio')
                 ->icon('heroicon-m-play')
                 ->color('primary')
                 ->form([
                     Select::make('schedule_id')
-                        ->label('Seleccionar Turno')
+                        ->label('Seleccionar Consultorio')
                         ->options(function () {
                             return ClinicSchedule::where('is_active', true)
                                 ->where('is_shift_open', false)
@@ -200,13 +200,13 @@ class ReceptionDashboard extends Dashboard
                 }),
 
             Action::make('closeShift')
-                ->label('Cerrar Turno')
+                ->label('Cerrar Consultorio')
                 ->icon('heroicon-m-stop')
                 ->color('danger')
                 ->visible(fn () => ClinicSchedule::query()->where('is_shift_open', true)->exists())
                 ->form([
                     Select::make('schedule_id')
-                        ->label('Seleccionar Turno a Cerrar')
+                        ->label('Seleccionar Consultorio a Cerrar')
                         ->options(function () {
                             return ClinicSchedule::where('is_shift_open', true)
                                 ->orderByDesc('date')

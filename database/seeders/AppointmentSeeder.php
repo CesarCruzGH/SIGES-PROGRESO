@@ -27,19 +27,22 @@ class AppointmentSeeder extends Seeder
         if ($schedules->isEmpty() || $records->isEmpty()) {
             return;
         }
-        $count = 90;
-        for ($i = 0; $i < $count; $i++) {
-            $schedule = $schedules->random();
-            $recordId = $records->random();
-            Appointment::factory()->create([
-                'medical_record_id' => $recordId,
-                'clinic_schedule_id' => $schedule->id,
-                'service_id' => $schedule->service_id,
-                'doctor_id' => $schedule->user_id,
-                'date' => $schedule->date,
-                'shift' => $schedule->shift->value,
-                'status' => fake()->randomElement($statuses),
-            ]);
-        }
+        $count = 50;
+        Appointment::withoutEvents(function () use ($count, $schedules, $records, $statuses) {
+            for ($i = 0; $i < $count; $i++) {
+                $schedule = $schedules->random();
+                $recordId = $records->random();
+                Appointment::factory()->create([
+                    'ticket_number' => \App\Models\Appointment::generateWalkInTicket(),
+                    'medical_record_id' => $recordId,
+                    'clinic_schedule_id' => $schedule->id,
+                    'service_id' => $schedule->service_id,
+                    'doctor_id' => $schedule->user_id,
+                    'date' => $schedule->date,
+                    'shift' => $schedule->shift->value,
+                    'status' => fake()->randomElement($statuses),
+                ]);
+            }
+        });
     }
 }

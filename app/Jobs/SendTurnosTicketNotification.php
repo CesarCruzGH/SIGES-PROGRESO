@@ -4,13 +4,14 @@ namespace App\Jobs;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class SendTurnosTicketNotification implements ShouldQueue
+class SendTurnosTicketNotification implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -20,6 +21,9 @@ class SendTurnosTicketNotification implements ShouldQueue
 
     public function handle(): void
     {
+        if (! config('turnos.enabled')) {
+            return;
+        }
         // 1. Obtener URL base y validar
         $base = config('turnos.url') ?: config('services.turnos.api_url');
 
@@ -64,5 +68,11 @@ class SendTurnosTicketNotification implements ShouldQueue
         } catch (\Throwable $e) {
             Log::warning("Fallo al notificar a Turnos ({$this->type})", ['url' => $url, 'error' => $e->getMessage()]);
         }
+    }
+
+    public function uniqueId(): string
+    {
+        $ticket = (string)($this->data['ticket_number'] ?? $this->data['ticket'] ?? '');
+        return $this->type . ':' . $ticket;
     }
 }
