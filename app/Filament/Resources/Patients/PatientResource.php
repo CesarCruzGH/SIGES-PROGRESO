@@ -15,6 +15,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use App\Enums\UserRole;
+use Illuminate\Support\Facades\Auth;
 
 
 use App\Filament\Resources\Patients\RelationManagers\MedicalLeavesRelationManager;
@@ -35,6 +37,11 @@ class PatientResource extends Resource
     protected static ?string $navigationLabel = 'Pacientes';
     protected static ?string $modelLabel = 'Pacientes';
     protected static ?string $pluralModelLabel = 'Pacientes';
+    public static function shouldRegisterNavigation(): bool
+    {
+        $role = Auth::user()?->role?->value ?? null;
+        return ! in_array($role, [UserRole::MEDICO_GENERAL->value, UserRole::ENFERMERO->value], true);
+    }
     public static function form(Schema $schema): Schema
     {
         return PatientForm::configure($schema);

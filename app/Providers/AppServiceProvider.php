@@ -24,6 +24,8 @@ class AppServiceProvider extends ServiceProvider
         $router = app('router');
         $router->aliasMiddleware('twofactor.verify', \App\Http\Middleware\RequireTwoFactorVerified::class);
         $router->aliasMiddleware('restrict.doctor', \App\Http\Middleware\RestrictDoctorAccess::class);
+        $router->aliasMiddleware('restrict.reception', \App\Http\Middleware\RestrictReceptionAccess::class);
+        $router->aliasMiddleware('restrict.nurse', \App\Http\Middleware\RestrictNurseAccess::class);
 
     }
 }

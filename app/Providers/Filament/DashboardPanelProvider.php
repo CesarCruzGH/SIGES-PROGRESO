@@ -78,6 +78,8 @@ class DashboardPanelProvider extends PanelProvider
                 'check.shift',
                 'twofactor.verify',
                 'restrict.doctor',
+                'restrict.reception',
+                'restrict.nurse',
             ])
             ->authMiddleware([
                 Authenticate::class,

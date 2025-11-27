@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+
 use Illuminate\Support\Facades\Auth;
 
 class ClinicScheduleResource extends Resource
@@ -26,11 +27,10 @@ class ClinicScheduleResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-clock';
 
     protected static ?string $recordTitleAttribute = 'clinic_name';
-
     public static function shouldRegisterNavigation(): bool
     {
-        $role = Auth::user()?->role?->value;
-        return $role !== UserRole::MEDICO_GENERAL->value;
+        $role = Auth::user()?->role?->value ?? null;
+        return ! in_array($role, [UserRole::MEDICO_GENERAL->value, UserRole::ENFERMERO->value], true);
     }
 
     public static function form(Schema $schema): Schema

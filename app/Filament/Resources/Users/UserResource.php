@@ -34,7 +34,7 @@ class UserResource extends Resource
     public static function shouldRegisterNavigation(): bool
     {
         $role = Auth::user()?->role?->value;
-        return $role !== UserRole::MEDICO_GENERAL->value;
+        return ! in_array($role, [UserRole::MEDICO_GENERAL->value, UserRole::RECEPCIONISTA->value, UserRole::ENFERMERO->value], true);
     }
 
     public static function form(Schema $schema): Schema

@@ -27,7 +27,7 @@ class ReceptionDashboard extends Dashboard
     public static function shouldRegisterNavigation(): bool
     {
         $role = Auth::user()?->role?->value ?? null;
-        return $role !== \App\Enums\UserRole::MEDICO_GENERAL->value;
+        return ! in_array($role, [\App\Enums\UserRole::MEDICO_GENERAL->value, \App\Enums\UserRole::ENFERMERO->value], true);
     }
 
     protected function getHeaderWidgets(): array

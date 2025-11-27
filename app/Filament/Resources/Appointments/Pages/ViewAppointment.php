@@ -43,7 +43,7 @@ class ViewAppointment extends ViewRecord
                 ->label('Editar Visita')
                 ->color('primary')
                 ->icon('heroicon-o-pencil')
-                ->visible(fn () => $this->record->medicalRecord->patient->status === 'active' && (Auth::user()?->role?->value !== UserRole::MEDICO_GENERAL->value)),
+                ->visible(fn () => $this->record->medicalRecord->patient->status === 'active' && ! in_array(Auth::user()?->role?->value, [UserRole::MEDICO_GENERAL->value, UserRole::ENFERMERO->value], true)),
                 
             Action::make('complete_patient_record')
                 ->label('Completar Expediente')

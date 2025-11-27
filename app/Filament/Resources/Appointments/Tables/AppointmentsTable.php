@@ -100,7 +100,7 @@ class AppointmentsTable
                     })
                     ->badge()
                     ->color(fn ($state) => match ($state->value ?? $state) {
-                        AppointmentStatus::PENDING->value, 'pending' => 'icon',
+                        AppointmentStatus::PENDING->value, 'pending' => 'info',
                         AppointmentStatus::IN_PROGRESS->value, 'in_progress' => 'warning',
                         AppointmentStatus::COMPLETED->value, 'completed' => 'success',
                         AppointmentStatus::CANCELLED->value, 'cancelled' => 'danger',
@@ -224,7 +224,7 @@ class AppointmentsTable
                         ->label('Confirmar Asistencia')
                         ->icon('heroicon-o-check')
                         ->color('success')
-                        ->visible(fn ($record) => $record->status === AppointmentStatus::PENDING && (Auth::user()?->role?->value !== UserRole::MEDICO_GENERAL->value))
+                        ->visible(fn ($record) => $record->status === AppointmentStatus::PENDING && in_array(Auth::user()?->role?->value, [UserRole::ENFERMERO->value, UserRole::RECEPCIONISTA->value, UserRole::ADMIN->value, UserRole::DIRECTOR->value], true))
                         ->requiresConfirmation()
                         ->action(function ($record) {
                             $record->update(['status' => AppointmentStatus::IN_PROGRESS]);
@@ -273,6 +273,12 @@ class AppointmentsTable
                     ->label('Hoy')
                     ->default(true)
                     ->query(fn (Builder $query) => $query->whereDate('created_at', now())),
+                Filter::make('en_consulta')
+                    ->label('En consulta')
+                    ->query(fn (Builder $query) => $query->where('status', AppointmentStatus::IN_PROGRESS)),
+                Filter::make('pendientes')
+                    ->label('Pendientes')
+                    ->query(fn (Builder $query) => $query->where('status', AppointmentStatus::PENDING)),
                 Filter::make('completadas')
                     ->label('Completadas')
                     ->query(fn (Builder $query) => $query->where('status', AppointmentStatus::COMPLETED)),

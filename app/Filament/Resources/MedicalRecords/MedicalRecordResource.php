@@ -15,6 +15,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use App\Enums\UserRole;
+use Illuminate\Support\Facades\Auth;
 
 use App\Filament\Resources\MedicalRecords\RelationManagers\AppointmentsRelationManager;
 use App\Filament\Resources\MedicalRecords\RelationManagers\MedicalDocumentsRelationManager;
@@ -32,6 +34,11 @@ class MedicalRecordResource extends Resource
     protected static ?string $navigationLabel = 'Expedientes';
     protected static ?string $modelLabel = 'Expediente';
     protected static ?string $pluralModelLabel = 'Expedientes';
+    public static function shouldRegisterNavigation(): bool
+    {
+        $role = Auth::user()?->role?->value ?? null;
+        return ! in_array($role, [UserRole::MEDICO_GENERAL->value, UserRole::RECEPCIONISTA->value, UserRole::ENFERMERO->value], true);
+    }
     public static function form(Schema $schema): Schema
     {
         return MedicalRecordForm::configure($schema);

@@ -34,13 +34,13 @@ class SecuritySettings extends Page implements HasForms
     public static function shouldRegisterNavigation(): bool
     {
         $role = Auth::user()?->role?->value;
-        return $role !== UserRole::MEDICO_GENERAL->value;
+        return ! in_array($role, [UserRole::MEDICO_GENERAL->value, UserRole::RECEPCIONISTA->value, UserRole::ENFERMERO->value], true);
     }
 
     public function mount(): void
     {
         $role = Auth::user()?->role?->value;
-        if ($role === UserRole::MEDICO_GENERAL->value) {
+        if (in_array($role, [UserRole::MEDICO_GENERAL->value, UserRole::RECEPCIONISTA->value, UserRole::ENFERMERO->value], true)) {
             abort(403);
         }
     }
@@ -49,7 +49,7 @@ class SecuritySettings extends Page implements HasForms
 
     protected function getHeaderActions(): array
     {
-        if (Auth::user()?->role?->value === \App\Enums\UserRole::MEDICO_GENERAL->value) {
+        if (in_array(Auth::user()?->role?->value, [\App\Enums\UserRole::MEDICO_GENERAL->value, \App\Enums\UserRole::RECEPCIONISTA->value, \App\Enums\UserRole::ENFERMERO->value], true)) {
             return [];
         }
         return [
