@@ -86,8 +86,14 @@ class ApiController extends Controller
             $medicalRecord = MedicalRecord::where('record_number', $data['record_number'])->first();
         } else {
             $patient = Patient::create(['status' => 'pending_review']);
-            // Garantizar el expediente aun si el evento created no se ha reflejado en la instancia actual
-            $medicalRecord = $patient->medicalRecord()->firstOrCreate([]);
+            $medicalRecord = MedicalRecord::where('patient_id', $patient->id)->first();
+            if (! $medicalRecord) {
+                try {
+                    $medicalRecord = MedicalRecord::firstOrCreate(['patient_id' => $patient->id], []);
+                } catch (\Illuminate\Database\QueryException $e) {
+                    $medicalRecord = MedicalRecord::where('patient_id', $patient->id)->first();
+                }
+            }
             $newPatientCreated = true;
         }
 

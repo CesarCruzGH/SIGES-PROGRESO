@@ -72,7 +72,7 @@ class AppointmentsTable
 
                 TextColumn::make('clinicSchedule.clinic_name')
                     ->label('Consultorio')
-                    ->prefix('Consultorio: ')
+                    
                     ->searchable()
                     ->placeholder('Sin asignar')
                     ->weight(fn (?string $state): string => is_null($state) ? 'bold' : 'normal')

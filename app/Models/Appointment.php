@@ -11,7 +11,11 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity;
 use Illuminate\Support\Facades\DB;
 use App\Models\ClinicSchedule;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 
+#[ObservedBy([\App\Observers\AppointmentObserver::class])]
 class Appointment extends Model
 {
     use HasFactory, LogsActivity;
@@ -91,6 +95,16 @@ class Appointment extends Model
                 }
             }
         });
+
+        static::updated(function (Appointment $appointment) {
+            if ($appointment->wasChanged('status')) {
+                if ($appointment->status === AppointmentStatus::IN_PROGRESS) {
+                    self::sendTurnosEvent('visit_started', $appointment);
+                } elseif ($appointment->status === AppointmentStatus::COMPLETED) {
+                    self::sendTurnosEvent('visit_completed', $appointment);
+                }
+            }
+        });
     }
 
     /**
@@ -114,6 +128,51 @@ class Appointment extends Model
         }
 
         return $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+    }
+
+    protected static function sendTurnosEvent(string $type, Appointment $a): void
+    {
+        $url = config('services.turnos.webhook_url');
+        if (! $url) {
+            return;
+        }
+
+        $a->loadMissing(['clinicSchedule', 'service', 'doctor']);
+
+        $payload = [
+            'type' => $type,
+            'ticket_number' => $a->ticket_number,
+            'status' => $a->status?->value,
+            'date' => $a->date?->toDateString(),
+            'shift' => is_string($a->shift) ? $a->shift : ($a->shift?->value ?? null),
+            'clinic' => [
+                'schedule_id' => $a->clinic_schedule_id,
+                'clinic_name' => optional($a->clinicSchedule)->clinic_name,
+                'service' => optional($a->service)->name,
+                'doctor' => optional($a->doctor)->name,
+                'schedule_date' => optional($a->clinicSchedule)->date?->toDateString(),
+                'schedule_shift' => optional($a->clinicSchedule)->shift?->value,
+            ],
+        ];
+
+        $request = Http::asJson();
+        $token = config('services.turnos.api_token');
+        if ($token) {
+            $request = $request->withToken($token);
+        }
+
+        try {
+            $response = $request->post($url, $payload);
+            Log::info('Turnos webhook sent', [
+                'url' => $url,
+                'status' => $response->status(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Turnos webhook failed', [
+                'url' => $url,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

@@ -97,7 +97,14 @@ class QuickActionsWidget extends Widget implements HasForms
                         if (! $patient) {
                             $patient = Patient::create($patientData);
                         }
-                        $medicalRecord = $patient->medicalRecord()->first() ?? $patient->medicalRecord()->create();
+                        $medicalRecord = MedicalRecord::where('patient_id', $patient->id)->first();
+                        if (! $medicalRecord) {
+                            try {
+                                $medicalRecord = MedicalRecord::firstOrCreate(['patient_id' => $patient->id], []);
+                            } catch (\Illuminate\Database\QueryException $e) {
+                                $medicalRecord = MedicalRecord::where('patient_id', $patient->id)->first();
+                            }
+                        }
                         $medicalRecord->update([
                             'patient_type' => $data['patient_type'],
                         ]);

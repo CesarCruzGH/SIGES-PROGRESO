@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'turnos' => [
+        'webhook_url' => env('TURNOS_WEBHOOK_URL'),
+        'api_token' => env('TURNOS_API_TOKEN'),
+    ],
+
 ];

@@ -69,8 +69,13 @@ class Patient extends Model
     {
 
         static::created(function (Patient $patient) {
-
-            $patient->medicalRecord()->create([]);
+            try {
+                \App\Models\MedicalRecord::firstOrCreate([
+                    'patient_id' => $patient->id,
+                ], []);
+            } catch (\Illuminate\Database\QueryException $e) {
+                \App\Models\MedicalRecord::where('patient_id', $patient->id)->first();
+            }
         });
 
         static::saving(function (Patient $patient) {
