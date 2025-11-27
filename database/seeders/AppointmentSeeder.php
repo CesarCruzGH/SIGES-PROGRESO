@@ -12,7 +12,10 @@ class AppointmentSeeder extends Seeder
 {
     public function run(): void
     {
-        $openSchedules = ClinicSchedule::query()->where('is_active', true)->where('is_shift_open', true)->get();
+        $schedules = ClinicSchedule::query()->where('is_active', true)->where('is_shift_open', true)->get();
+        if ($schedules->isEmpty()) {
+            $schedules = ClinicSchedule::query()->where('is_active', true)->get();
+        }
         $records = MedicalRecord::query()->pluck('id');
         $statuses = [
             AppointmentStatus::PENDING->value,
@@ -21,9 +24,12 @@ class AppointmentSeeder extends Seeder
             AppointmentStatus::CANCELLED->value,
         ];
 
+        if ($schedules->isEmpty() || $records->isEmpty()) {
+            return;
+        }
         $count = 90;
         for ($i = 0; $i < $count; $i++) {
-            $schedule = $openSchedules->random();
+            $schedule = $schedules->random();
             $recordId = $records->random();
             Appointment::factory()->create([
                 'medical_record_id' => $recordId,
@@ -37,4 +43,3 @@ class AppointmentSeeder extends Seeder
         }
     }
 }
-

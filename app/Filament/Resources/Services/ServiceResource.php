@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Services;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\Services\Pages\CreateService;
 use App\Filament\Resources\Services\Pages\EditService;
 use App\Filament\Resources\Services\Pages\ListServices;
@@ -15,6 +16,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 
 class ServiceResource extends Resource
 {
@@ -56,6 +58,11 @@ class ServiceResource extends Resource
             'view' => ViewService::route('/{record}'),
             'edit' => EditService::route('/{record}/edit'),
         ];
+    }
+    public static function shouldRegisterNavigation(): bool
+    {
+        $role = Auth::user()?->role?->value;
+        return $role !== UserRole::MEDICO_GENERAL->value;
     }
         public static function getNavigationSort(): ?int
     {

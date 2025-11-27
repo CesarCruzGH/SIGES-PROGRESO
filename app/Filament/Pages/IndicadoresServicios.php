@@ -2,12 +2,14 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\UserRole;
 use Filament\Pages\Page;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\ServicesExport;
+use Illuminate\Support\Facades\Auth;
 
 class IndicadoresServicios extends Page
 {
@@ -16,6 +18,20 @@ class IndicadoresServicios extends Page
     protected static ?string $title = 'Indicadores — Servicios';
     protected static ?string $navigationLabel = 'Indicadores (Servicios)';
     protected static ?string $slug = 'reportes/indicadores-servicios';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $role = Auth::user()?->role?->value;
+        return in_array($role, [UserRole::ADMIN->value, UserRole::DIRECTOR->value]);
+    }
+
+    public function mount(): void
+    {
+        $role = Auth::user()?->role?->value;
+        if (! in_array($role, [UserRole::ADMIN->value, UserRole::DIRECTOR->value])) {
+            abort(403);
+        }
+    }
 
     protected function getHeaderWidgets(): array
     {

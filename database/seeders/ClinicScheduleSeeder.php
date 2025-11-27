@@ -14,32 +14,41 @@ class ClinicScheduleSeeder extends Seeder
 {
     public function run(): void
     {
-        $clinicNames = ['Consultorio A','Consultorio B','Consultorio C','Consultorio D'];
-        $dates = [Carbon::yesterday()->toDateString(), Carbon::today()->toDateString(), Carbon::tomorrow()->toDateString()];
-        $shifts = [Shift::MATUTINO, Shift::VESPERTINO];
-
+        $date = Carbon::today()->toDateString();
         $doctorIds = User::query()->where('role', \App\Enums\UserRole::MEDICO_GENERAL->value)->pluck('id');
         if ($doctorIds->isEmpty()) {
             $doctorIds = User::query()->pluck('id');
         }
-        $serviceIds = Service::query()->pluck('id');
 
-        foreach ($clinicNames as $clinic) {
-            foreach ($dates as $date) {
-                foreach ($shifts as $shift) {
-                    $isOpen = (bool) random_int(0, 1);
+        $services = Service::query()->pluck('id', 'name');
+        $clinicNames = ['Consultorio A','Consultorio B','Consultorio C','Consultorio D'];
+
+        $plan = [
+            ['name' => 'Psicología', 'counts' => [Shift::MATUTINO->value => 1, Shift::VESPERTINO->value => 1]],
+            ['name' => 'Dentista',   'counts' => [Shift::MATUTINO->value => 1, Shift::VESPERTINO->value => 1]],
+            ['name' => 'Medicina General', 'counts' => [Shift::MATUTINO->value => 4, Shift::VESPERTINO->value => 4]],
+        ];
+
+        foreach ($plan as $item) {
+            $serviceId = $services[$item['name']] ?? null;
+            if (! $serviceId) {
+                continue;
+            }
+            foreach ($item['counts'] as $shift => $count) {
+                for ($i = 0; $i < $count; $i++) {
+                    $clinic = $clinicNames[$i % count($clinicNames)];
                     $attributes = [
                         'clinic_name' => $clinic,
                         'date' => $date,
                         'shift' => $shift,
                     ];
                     $values = [
-                        'user_id' => $doctorIds->random(),
-                        'service_id' => $serviceIds->random(),
+                        'user_id' => Arr::random($doctorIds->all()),
+                        'service_id' => $serviceId,
                         'is_active' => true,
-                        'is_shift_open' => $isOpen,
-                        'shift_opened_at' => $isOpen ? now() : null,
-                        'opened_by' => $isOpen ? Arr::random($doctorIds->all()) : null,
+                        'is_shift_open' => false,
+                        'shift_opened_at' => null,
+                        'opened_by' => null,
                     ];
                     ClinicSchedule::updateOrCreate($attributes, $values);
                 }

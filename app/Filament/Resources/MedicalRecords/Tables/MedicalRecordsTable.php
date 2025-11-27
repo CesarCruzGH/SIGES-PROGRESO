@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\MedicalRecords\Tables;
 
 use App\Enums\PatientType;
+use App\Enums\UserRole;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\DeleteAction;
@@ -13,6 +14,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\Layout\Split;
 use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 
 class MedicalRecordsTable
 {
@@ -65,8 +67,9 @@ class MedicalRecordsTable
             ])
             ->recordActions([
                 ViewAction::make(),
-                EditAction::make(),
+                //EditAction::make(),
                 DeleteAction::make()
+                    ->visible(fn () => in_array(Auth::user()?->role?->value, [UserRole::ADMIN->value, UserRole::DIRECTOR->value], true))
                     ->label('Eliminar')
                     ->requiresConfirmation()
                     ->form([
@@ -79,7 +82,7 @@ class MedicalRecordsTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()->visible(fn () => in_array(Auth::user()?->role?->value, [UserRole::ADMIN->value, UserRole::DIRECTOR->value], true)),
                 ]),
             ]);
     }

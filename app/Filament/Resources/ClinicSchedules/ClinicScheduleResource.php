@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ClinicSchedules;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\ClinicSchedules\Pages\CreateClinicSchedule;
 use App\Filament\Resources\ClinicSchedules\Pages\EditClinicSchedule;
 use App\Filament\Resources\ClinicSchedules\Pages\ListClinicSchedules;
@@ -14,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 
 class ClinicScheduleResource extends Resource
 {
@@ -24,6 +26,12 @@ class ClinicScheduleResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-clock';
 
     protected static ?string $recordTitleAttribute = 'clinic_name';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $role = Auth::user()?->role?->value;
+        return $role !== UserRole::MEDICO_GENERAL->value;
+    }
 
     public static function form(Schema $schema): Schema
     {

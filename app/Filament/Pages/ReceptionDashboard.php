@@ -24,6 +24,11 @@ use Illuminate\Support\Facades\Auth;
 class ReceptionDashboard extends Dashboard
 {
     protected static ?string $title = 'Panel de Recepción';
+    public static function shouldRegisterNavigation(): bool
+    {
+        $role = Auth::user()?->role?->value ?? null;
+        return $role !== \App\Enums\UserRole::MEDICO_GENERAL->value;
+    }
 
     protected function getHeaderWidgets(): array
     {

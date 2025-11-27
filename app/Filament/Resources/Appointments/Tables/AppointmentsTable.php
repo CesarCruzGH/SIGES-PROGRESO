@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Appointments\Tables;
 
 use App\Enums\AppointmentStatus;
 use App\Enums\VisitType;
+use App\Enums\UserRole;
 use App\Filament\Resources\Patients\PatientResource;
 use App\Filament\Resources\MedicalRecords\RelationManagers\SomatometricReadingsRelationManager;
 use App\Models\NursingAssessment;
@@ -42,6 +43,12 @@ class AppointmentsTable
             ->heading('Visitas')
             ->description('Control de Visitas')
             ->poll('10s')
+            ->modifyQueryUsing(function (Builder $query) {
+                if (Auth::user()?->role?->value === UserRole::MEDICO_GENERAL->value) {
+                    $query->where('doctor_id', Auth::id());
+                }
+                return $query;
+            })
             ->columns([
                 
                 TextColumn::make('medicalRecord.patient.full_name')
@@ -128,7 +135,8 @@ class AppointmentsTable
                 SelectFilter::make('doctor')
                     ->relationship('doctor', 'name')
                     ->label('Médico')
-                    ->preload(),
+                    ->preload()
+                    ->visible(fn () => Auth::user()?->role?->value !== UserRole::MEDICO_GENERAL->value),
                     
                 Filter::make('appointment_date')
                     ->form([
@@ -152,7 +160,7 @@ class AppointmentsTable
             ->recordUrl(fn ($record): string => route('filament.dashboard.resources.appointments.view', ['record' => $record]))
             ->recordActions([
                 ActionGroup::make([
-                    ViewAction::make(),
+                    //ViewAction::make(),
                     EditAction::make()->visible(fn ($record) =>
                         $record->medicalRecord->patient->status === 'active'
                         && (
@@ -161,6 +169,7 @@ class AppointmentsTable
                                 ? (optional($record->clinicSchedule)->is_shift_open ?? false)
                                 : true
                         )
+                        && (Auth::user()?->role?->value !== UserRole::MEDICO_GENERAL->value)
                     )
                     ,   
                                     
@@ -168,7 +177,7 @@ class AppointmentsTable
                         ->label('Completar Expediente')
                         ->icon('heroicon-o-identification')
                         ->color('warning')
-                        ->visible(fn ($record) => $record->medicalRecord->patient->status === 'pending_review')
+                        ->visible(fn ($record) => $record->medicalRecord->patient->status === 'pending_review' && (Auth::user()?->role?->value !== UserRole::MEDICO_GENERAL->value))
                         ->url(fn ($record): string => PatientResource::getUrl('edit', ['record' => $record->medicalRecord->patient,'appointment_id' => $record->id])),
 
                     // Hoja Inicial (Valoración de Enfermería)
@@ -178,7 +187,7 @@ class AppointmentsTable
                         ->visible(function ($record) {
                             // Verificar si es primera vez Y si NO existe una valoración inicial
                             $hasAssessment = NursingAssessment::where('medical_record_id', $record->medical_record_id)->exists();
-                            return $record->visit_type === VisitType::PRIMERA_VEZ->value && !$hasAssessment;
+                            return $record->visit_type === VisitType::PRIMERA_VEZ->value && !$hasAssessment && (Auth::user()?->role?->value !== UserRole::MEDICO_GENERAL->value);
                         })
                         ->form(function ($record) {
                             // Buscar valoración existente para prellenar el formulario
@@ -210,28 +219,12 @@ class AppointmentsTable
                                 ->title('Hoja Inicial guardada')
                                 ->success()
                                 ->send();
-                        }),
-
-                    // Hoja Diaria (Somatometría)
-                    Action::make('register_somatometrics')
-                        ->label('Registrar Hoja Diaria')
-                        ->icon('heroicon-o-heart')
-                        ->visible(fn ($record) => !(($record->visit_type === VisitType::PRIMERA_VEZ->value)
-                            && empty($record->medicalRecord->nursingAssessment)))
-                        ->schema(SomatometricReadingsRelationManager::getFormSchema())
-                        ->action(function ($record, array $data) {
-                            SomatometricReading::create(array_merge($data, [
-                                'medical_record_id' => $record->medical_record_id,
-                                'appointment_id' => $record->id,
-                                'user_id' => Auth::id(),
-                            ]));
-                        }),
-                        
+                        }),                        
                     Action::make('confirm_attendance')
                         ->label('Confirmar Asistencia')
                         ->icon('heroicon-o-check')
                         ->color('success')
-                        ->visible(fn ($record) => $record->status === AppointmentStatus::PENDING)
+                        ->visible(fn ($record) => $record->status === AppointmentStatus::PENDING && (Auth::user()?->role?->value !== UserRole::MEDICO_GENERAL->value))
                         ->requiresConfirmation()
                         ->action(function ($record) {
                             $record->update(['status' => AppointmentStatus::IN_PROGRESS]);
@@ -247,7 +240,7 @@ class AppointmentsTable
                         ->label('Cancelar Cita')
                         ->icon('heroicon-o-x-mark')
                         ->color('danger')
-                        ->visible(fn ($record) => in_array($record->status, [AppointmentStatus::PENDING, AppointmentStatus::IN_PROGRESS]))
+                        ->visible(fn ($record) => in_array($record->status, [AppointmentStatus::PENDING, AppointmentStatus::IN_PROGRESS]) && (Auth::user()?->role?->value !== UserRole::MEDICO_GENERAL->value))
                         ->requiresConfirmation()
                         ->action(function ($record) {
                             $record->update(['status' => AppointmentStatus::CANCELLED]);
@@ -266,10 +259,16 @@ class AppointmentsTable
                 ]),
             ])
             ->headerActions([
-                CreateAction::make()->label('Crear Nueva Visita')->tooltip('Crear una nueva visita'),
+                CreateAction::make()->label('Crear Nueva Visita')->tooltip('Crear una nueva visita')
+                    ->visible(fn () => Auth::user()?->role?->value !== UserRole::MEDICO_GENERAL->value),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
+                Filter::make('mis')
+                    ->label('Mis visitas')
+                    ->default(true)
+                    ->visible(fn () => Auth::user()?->role?->value === UserRole::MEDICO_GENERAL->value)
+                    ->query(fn (Builder $query) => $query->where('doctor_id', Auth::id())),
                 Filter::make('hoy')
                     ->label('Hoy')
                     ->default(true)
@@ -282,7 +281,8 @@ class AppointmentsTable
                     ->query(fn (Builder $query) => $query->whereIn('status', [AppointmentStatus::CANCELLED])),
                 Filter::make('todas')
                     ->label('Todas')
-                    ->query(fn (Builder $query) => $query),
+                    ->query(fn (Builder $query) => $query)
+                    ->visible(fn () => Auth::user()?->role?->value !== UserRole::MEDICO_GENERAL->value),
             ]);
     }
 }

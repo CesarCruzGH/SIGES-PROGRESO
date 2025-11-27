@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\UserRole;
 use Filament\Pages\Page;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
@@ -30,10 +31,27 @@ class SecuritySettings extends Page implements HasForms
     protected static ?string $slug = 'security';
     protected string $view = 'filament.pages.security-settings';
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        $role = Auth::user()?->role?->value;
+        return $role !== UserRole::MEDICO_GENERAL->value;
+    }
+
+    public function mount(): void
+    {
+        $role = Auth::user()?->role?->value;
+        if ($role === UserRole::MEDICO_GENERAL->value) {
+            abort(403);
+        }
+    }
+
     public ?string $code = null;
 
     protected function getHeaderActions(): array
     {
+        if (Auth::user()?->role?->value === \App\Enums\UserRole::MEDICO_GENERAL->value) {
+            return [];
+        }
         return [
             Action::make('enable')
                 ->label('Habilitar 2FA')

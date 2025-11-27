@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\UserRole;
 use Filament\Pages\Page;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -64,5 +65,18 @@ class TwoFactorChallenge extends Page implements HasForms
                     Notification::make()->title('Código inválido')->danger()->send();
                 }),
         ];
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
+    public function mount(): void
+    {
+        $role = Auth::user()?->role?->value;
+        if ($role === UserRole::MEDICO_GENERAL->value) {
+            // Do not show any actions or navigation; doctors shouldn't see this link
+        }
     }
 }

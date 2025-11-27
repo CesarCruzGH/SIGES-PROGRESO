@@ -6,7 +6,10 @@ use App\Filament\Resources\Appointments\AppointmentResource;
 use App\Filament\Resources\Patients\PatientResource;
 use App\Filament\Resources\Patients\Schemas\PatientForm;
 use App\Enums\AppointmentStatus;
+use App\Enums\UserRole;
+use App\Enums\MedicalLeaveStatus;
 use App\Models\Prescription;
+use App\Models\MedicalLeave;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -40,7 +43,7 @@ class ViewAppointment extends ViewRecord
                 ->label('Editar Visita')
                 ->color('primary')
                 ->icon('heroicon-o-pencil')
-                ->visible(fn () => $this->record->medicalRecord->patient->status === 'active'),
+                ->visible(fn () => $this->record->medicalRecord->patient->status === 'active' && (Auth::user()?->role?->value !== UserRole::MEDICO_GENERAL->value)),
                 
             Action::make('complete_patient_record')
                 ->label('Completar Expediente')
@@ -116,9 +119,68 @@ class ViewAppointment extends ViewRecord
                     Notification::make()
                         ->title('Consulta registrada')
                         ->success()
+                        ->actions([
+                            Action::make('ver_receta')
+                                ->label('Ver receta')
+                                ->url(route('prescription.download', ['prescriptionId' => $prescription->id, 'copyType' => 'patient']))
+                                ->button(),
+                        ])
                         ->send();
 
-                    $this->redirect(route('prescription.download', ['prescriptionId' => $prescription->id, 'copyType' => 'patient']));
+                    $this->redirect(AppointmentResource::getUrl('view', ['record' => $this->record]));
+                }),
+
+            Action::make('view_medical_record')
+                ->label('Ver Expediente')
+                ->icon('heroicon-o-identification')
+                ->color('info')
+                ->visible(fn () => in_array(Auth::user()?->role?->value, [UserRole::MEDICO_GENERAL->value, UserRole::ADMIN->value, UserRole::DIRECTOR->value], true))
+                ->action(function (): void {
+                    $url = \App\Filament\Resources\MedicalRecords\MedicalRecordResource::getUrl('view', [
+                        'record' => $this->record->medical_record_id,
+                    ]);
+                    $url .= '?appointment_id=' . $this->record->id;
+                    $this->redirect($url);
+                }),
+
+            Action::make('create_medical_leave')
+                ->label('Crear Incapacidad')
+                ->icon('heroicon-o-document-text')
+                ->color('warning')
+                ->visible(fn () => Prescription::where('medical_record_id', $this->record->medical_record_id)->exists() && in_array(Auth::user()?->role?->value, [UserRole::MEDICO_GENERAL->value, UserRole::ADMIN->value, UserRole::DIRECTOR->value], true))
+                ->form([
+                    Section::make('Detalles de la Incapacidad')
+                        ->columns(2)
+                        ->schema([
+                            \Filament\Forms\Components\DatePicker::make('issue_date')->label('Fecha de Emisión')->default(now())->required(),
+                            \Filament\Forms\Components\DatePicker::make('start_date')->label('Fecha de Inicio')->native(false)->required()->live(),
+                            \Filament\Forms\Components\TextInput::make('duration_in_days')->label('Duración (días)')->numeric()->required()->live(onBlur: true)->afterStateUpdated(function ($get,$set) { $startDate = $get('start_date'); $duration = $get('duration_in_days'); if ($startDate && $duration) { $set('end_date', \Carbon\Carbon::parse($startDate)->addDays($duration - 1)->format('Y-m-d')); } }),
+                            \Filament\Forms\Components\DatePicker::make('end_date')->label('Fecha de Fin')->native(false)->required(),
+                            \Filament\Forms\Components\Textarea::make('reason')->label('Justificación / Diagnóstico Médico')->columnSpanFull()->required(),
+                        ]),
+                ])
+                ->action(function (array $data): void {
+                    $leave = MedicalLeave::create([
+                        'medical_record_id' => $this->record->medical_record_id,
+                        'doctor_id' => Auth::id(),
+                        'issue_date' => $data['issue_date'],
+                        'start_date' => $data['start_date'],
+                        'end_date' => $data['end_date'],
+                        'duration_in_days' => $data['duration_in_days'],
+                        'reason' => $data['reason'],
+                        'status' => MedicalLeaveStatus::PENDING_APPROVAL->value,
+                    ]);
+                    Notification::make()
+                        ->title('Incapacidad creada')
+                        ->success()
+                        ->actions([
+                            Action::make('ver_incapacidad')
+                                ->label('Ver documento')
+                                ->url(route('medical-leave.download', ['medicalLeaveId' => $leave->id, 'copyType' => 'patient']))
+                                ->button(),
+                        ])
+                        ->send();
+                    $this->redirect(AppointmentResource::getUrl('view', ['record' => $this->record]));
                 }),
 
             Action::make('print_prescription_patient')
@@ -145,7 +207,7 @@ class ViewAppointment extends ViewRecord
                 ->label('Registrar Hoja Inicial de Enfermería')
                 ->icon('heroicon-o-clipboard-document-list')
                 ->color('warning')
-                ->visible(fn () => $this->record->visit_type === VisitType::PRIMERA_VEZ->value && $this->record->medicalRecord->nursingAssessmentInitial === null)
+                ->visible(fn () => $this->record->visit_type === VisitType::PRIMERA_VEZ->value && $this->record->medicalRecord->nursingAssessmentInitial === null && (Auth::user()?->role?->value !== UserRole::MEDICO_GENERAL->value))
                 ->form([
                     Section::make('Signos vitales')
                         ->columns(3)
@@ -205,15 +267,15 @@ class ViewAppointment extends ViewRecord
                 ->label('Registrar Hoja Inicial Médica')
                 ->icon('heroicon-o-clipboard-document-check')
                 ->color('warning')
-                ->visible(fn () => $this->record->visit_type === VisitType::PRIMERA_VEZ->value && $this->record->medicalRecord->medicalInitialAssessment === null)
+                ->visible(fn () => $this->record->visit_type === VisitType::PRIMERA_VEZ->value && $this->record->medicalRecord->medicalInitialAssessment === null && in_array(Auth::user()?->role?->value, [UserRole::MEDICO_GENERAL->value, UserRole::ADMIN->value, UserRole::DIRECTOR->value], true))
                 ->form([
-                    Textarea::make('allergies')->rows(3),
-                    Textarea::make('personal_pathological_history')->rows(4),
-                    Textarea::make('gyneco_obstetric_history')->rows(4),
-                    Textarea::make('current_illness')->rows(5),
-                    Textarea::make('physical_exam')->rows(5),
-                    Textarea::make('diagnosis')->rows(3),
-                    Textarea::make('treatment_note')->rows(3),
+                    Textarea::make('allergies')->label('Alergias')->rows(3),
+                    Textarea::make('personal_pathological_history')->label('Antecedentes personales patológicos')->rows(4),
+                    Textarea::make('gyneco_obstetric_history')->label('Antecedentes gineco-obstétricos')->rows(4),
+                    Textarea::make('current_illness')->label('Padecimiento actual')->rows(5),
+                    Textarea::make('physical_exam')->label('Exploración física')->rows(5),
+                    Textarea::make('diagnosis')->label('Diagnóstico')->rows(3),
+                    Textarea::make('treatment_note')->label('Nota de tratamiento')->rows(3),
                 ])
                 ->action(function (array $data): void {
                     $owner = $this->record;
@@ -229,7 +291,7 @@ class ViewAppointment extends ViewRecord
                 ->label('Registrar Evolución de Enfermería')
                 ->icon('heroicon-o-document-plus')
                 ->color('info')
-                ->visible(fn () => $this->record->visit_type === VisitType::SUBSECUENTE->value)
+                ->visible(fn () => $this->record->visit_type === VisitType::SUBSECUENTE->value && (Auth::user()?->role?->value !== UserRole::MEDICO_GENERAL->value))
                 ->form([
                     Textarea::make('problem')->label('P'),
                     Textarea::make('subjective')->label('S'),

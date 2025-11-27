@@ -59,6 +59,7 @@ class DashboardPanelProvider extends PanelProvider
             ->pages([
                 \App\Filament\Pages\ReceptionDashboard::class,
                 \App\Filament\Pages\SecuritySettings::class,
+                // Acceso rápido: Mis visitas (solo navegación)
             ])
             ->widgets([
                 // Sin widgets por defecto en el cuerpo del dashboard;
@@ -76,6 +77,7 @@ class DashboardPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
                 'check.shift',
                 'twofactor.verify',
+                'restrict.doctor',
             ])
             ->authMiddleware([
                 Authenticate::class,

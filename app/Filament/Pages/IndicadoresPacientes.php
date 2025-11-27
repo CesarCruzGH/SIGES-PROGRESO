@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\UserRole;
 use App\Exports\PatientsExport;
 use Carbon\Carbon;
 use Filament\Actions\Action;
@@ -9,6 +10,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Pages\Page;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Auth;
 
 class IndicadoresPacientes extends Page
 {
@@ -17,6 +19,20 @@ class IndicadoresPacientes extends Page
     protected static ?string $title = 'Indicadores — Pacientes';
     protected static ?string $navigationLabel = 'Indicadores (Pacientes)';
     protected static ?string $slug = 'reportes/indicadores-pacientes';
+
+    public  static function shouldRegisterNavigation(): bool
+    {
+        $role = Auth::user()?->role?->value;
+        return in_array($role, [UserRole::ADMIN->value, UserRole::DIRECTOR->value]);
+    }
+
+    public function mount(): void
+    {
+        $role = Auth::user()?->role?->value;
+        if (! in_array($role, [UserRole::ADMIN->value, UserRole::DIRECTOR->value])) {
+            abort(403);
+        }
+    }
 
     protected function getHeaderActions(): array
     {

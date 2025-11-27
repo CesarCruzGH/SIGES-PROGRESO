@@ -13,9 +13,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Actions\CreateAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Select;
 use App\Enums\AppointmentStatus;
+use App\Models\Prescription;
 
 
 class AppointmentsRelationManager extends RelationManager
@@ -86,6 +88,25 @@ class AppointmentsRelationManager extends RelationManager
             ->recordActions([
                 EditAction::make(),
                 DeleteAction::make(),
+                Action::make('view_consultation_patient')
+                    ->label('Ver Consulta (Paciente)')
+                    ->icon('heroicon-o-clipboard-document')
+                    ->visible(fn ($record) => $record->status === AppointmentStatus::COMPLETED && Prescription::where('medical_record_id', $record->medical_record_id)->exists())
+                    ->url(fn ($record) => route('prescription.download', [
+                        'prescriptionId' => Prescription::where('medical_record_id', $record->medical_record_id)->orderByDesc('id')->value('id'),
+                        'copyType' => 'patient',
+                    ]))
+                    ->button(),
+                Action::make('view_consultation_institution')
+                    ->label('Ver Consulta (Institución)')
+                    ->icon('heroicon-o-clipboard-document')
+                    ->color('gray')
+                    ->visible(fn ($record) => $record->status === AppointmentStatus::COMPLETED && Prescription::where('medical_record_id', $record->medical_record_id)->exists())
+                    ->url(fn ($record) => route('prescription.download', [
+                        'prescriptionId' => Prescription::where('medical_record_id', $record->medical_record_id)->orderByDesc('id')->value('id'),
+                        'copyType' => 'institution',
+                    ]))
+                    ->button(),
             ]);
     }
 }
