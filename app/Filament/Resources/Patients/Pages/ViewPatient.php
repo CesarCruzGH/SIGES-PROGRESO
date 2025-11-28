@@ -21,7 +21,7 @@ class ViewPatient extends ViewRecord
     {
         return [
             EditAction::make()->label('Editar Paciente')->icon('heroicon-o-pencil')->tooltip('Editar información del paciente'),
-            Action::make('addSomatometricReading')
+            /*Action::make('addSomatometricReading')
                 ->label('Registrar Somatometría')
                 ->icon('heroicon-o-heart')
                 ->tooltip('Registrar somatometría del paciente')
@@ -88,7 +88,7 @@ class ViewPatient extends ViewRecord
                         ->success()
                         ->send();
                 }),
-        ];
+        */];
     }
     public function getTitle(): string
     {

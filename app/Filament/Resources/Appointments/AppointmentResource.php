@@ -10,6 +10,7 @@ use App\Filament\Resources\Appointments\Schemas\AppointmentForm;
 use App\Filament\Resources\Appointments\Schemas\AppointmentInfolist;
 use App\Filament\Resources\Appointments\Tables\AppointmentsTable;
 use App\Models\Appointment;
+use App\Enums\UserRole;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -17,7 +18,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use App\Enums\AppointmentStatus; // Importar el Enum de estados
 use Illuminate\Database\Eloquent\Builder;
-
+use Illuminate\Support\Facades\Auth;
 class AppointmentResource extends Resource
 {
     
@@ -69,6 +70,10 @@ class AppointmentResource extends Resource
 
     public static function getRelations(): array
     {
+        $user = Auth::user();
+        if ($user && $user->role === UserRole::RECEPCIONISTA) {
+            return [];
+        }
         return [
             \App\Filament\Resources\Appointments\RelationManagers\NursingEvolutionsRelationManager::class,
         ];

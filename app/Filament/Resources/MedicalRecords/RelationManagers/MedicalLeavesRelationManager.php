@@ -86,6 +86,7 @@ class MedicalLeavesRelationManager extends RelationManager
                         DatePicker::make('end_date')
                             ->label('Fecha de Fin de Incapacidad')
                             ->required()
+                            //->disabled()
                             ->native(false),
 
                         Select::make('status')

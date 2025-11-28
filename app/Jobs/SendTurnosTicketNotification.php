@@ -35,11 +35,11 @@ class SendTurnosTicketNotification implements ShouldQueue, ShouldBeUnique
 
         // 2. Definir el endpoint dinámicamente según el tipo de evento
         $endpoint = match ($this->type) {
-            'call'   => '/turnos/turno-siguiente',
-            'finish' => '/turnos/turno-completado',
+            'assign' => '/turnos/turno-siguiente',
+            'confirm' => '/turnos/turno-confirmar-asistencia',
+            'finish' => '/turnos/turno-finalizar',
             'cancel' => '/turnos/turno-cancelado',
-            // en negociación
-            'new'    => '/turnos/nuevo-turno', // (EJEMPLO - PREGUNTARLE)
+            'new'    => '/turnos/nuevo-turno',
             default  => '/turnos/actualizar',
         };
 

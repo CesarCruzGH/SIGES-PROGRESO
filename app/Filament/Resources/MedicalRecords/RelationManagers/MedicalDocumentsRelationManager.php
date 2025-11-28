@@ -59,6 +59,9 @@ class MedicalDocumentsRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make()
+                    ->label('Subir nuevo documento')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->modalHeading('Subir Documento Médico')
                     ->mutateFormDataUsing(function (array $data): array {
                         $data['user_id'] = Auth::id();
                         return $data;
@@ -77,6 +80,14 @@ class MedicalDocumentsRelationManager extends RelationManager
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
+                CreateAction::make()
+                    ->label('Subir nuevo documento')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->modalHeading('Subir Documento Médico')
+                    ->mutateFormDataUsing(function (array $data): array {
+                        $data['user_id'] = Auth::id();
+                        return $data;
+                    }),
             ]);
     }
 }

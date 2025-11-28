@@ -22,6 +22,7 @@ class PrescriptionSeeder extends Seeder
         foreach ($selected as $appointment) {
             Prescription::factory()->create([
                 'medical_record_id' => $appointment->medical_record_id,
+                'appointment_id' => $appointment->id,
                 'doctor_id' => $appointment->doctor_id,
                 'issue_date' => now()->toDateString(),
             ]);

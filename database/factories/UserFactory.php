@@ -15,7 +15,7 @@ class UserFactory extends Factory
         return [
             'name' => $this->faker->name(),
             'email' => $this->faker->unique()->safeEmail(),
-            'password' => 'password',
+            'password' => '1234',
             'role' => UserRole::RECEPCIONISTA,
         ];
     }
@@ -40,4 +40,3 @@ class UserFactory extends Factory
         return $this->state(fn () => ['role' => UserRole::RECEPCIONISTA]);
     }
 }
-

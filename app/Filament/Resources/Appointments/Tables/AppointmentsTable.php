@@ -47,6 +47,12 @@ class AppointmentsTable
                 if (Auth::user()?->role?->value === UserRole::MEDICO_GENERAL->value) {
                     $query->where('doctor_id', Auth::id());
                 }
+                if (Auth::user()?->role?->value === UserRole::ENFERMERO->value) {
+                    $query->whereIn('status', [AppointmentStatus::PENDING, AppointmentStatus::IN_PROGRESS]);
+                }
+                if (Auth::user()?->role?->value === UserRole::RECEPCIONISTA->value) {
+                    $query->whereIn('status', [AppointmentStatus::PENDING, AppointmentStatus::IN_PROGRESS]);
+                }
                 return $query;
             })
             ->columns([
@@ -161,6 +167,7 @@ class AppointmentsTable
             ->recordActions([
                 ActionGroup::make([
                     //ViewAction::make(),
+                    /*
                     EditAction::make()->visible(fn ($record) =>
                         $record->medicalRecord->patient->status === 'active'
                         && (
@@ -171,7 +178,7 @@ class AppointmentsTable
                         )
                         && (Auth::user()?->role?->value !== UserRole::MEDICO_GENERAL->value)
                     )
-                    ,   
+                    ,   */
                                     
                     Action::make('complete_patient_record')
                         ->label('Completar Expediente')
@@ -180,7 +187,7 @@ class AppointmentsTable
                         ->visible(fn ($record) => $record->medicalRecord->patient->status === 'pending_review' && (Auth::user()?->role?->value !== UserRole::MEDICO_GENERAL->value))
                         ->url(fn ($record): string => PatientResource::getUrl('edit', ['record' => $record->medicalRecord->patient,'appointment_id' => $record->id])),
 
-                    // Hoja Inicial (Valoración de Enfermería)
+                    /* Hoja Inicial (Valoración de Enfermería)
                     Action::make('fill_initial_sheet')
                         ->label('Registrar Hoja Inicial')
                         ->icon('heroicon-o-document-plus')
@@ -219,7 +226,7 @@ class AppointmentsTable
                                 ->title('Hoja Inicial guardada')
                                 ->success()
                                 ->send();
-                        }),                        
+                        }),*/                        
                     Action::make('confirm_attendance')
                         ->label('Confirmar Asistencia')
                         ->icon('heroicon-o-check')
@@ -228,6 +235,10 @@ class AppointmentsTable
                         ->requiresConfirmation()
                         ->action(function ($record) {
                             $record->update(['status' => AppointmentStatus::IN_PROGRESS]);
+                            \App\Jobs\SendTurnosTicketNotification::dispatch('confirm', [
+                                'ticket' => $record->ticket_number,
+                                'estado' => 'en_consulta',
+                            ])->afterCommit();
                             
                             Notification::make()
                                 ->title('Asistencia confirmada')
@@ -281,14 +292,16 @@ class AppointmentsTable
                     ->query(fn (Builder $query) => $query->where('status', AppointmentStatus::PENDING)),
                 Filter::make('completadas')
                     ->label('Completadas')
-                    ->query(fn (Builder $query) => $query->where('status', AppointmentStatus::COMPLETED)),
+                    ->query(fn (Builder $query) => $query->where('status', AppointmentStatus::COMPLETED))
+                    ->visible(fn () => ! in_array(Auth::user()?->role?->value, [UserRole::ENFERMERO->value, UserRole::RECEPCIONISTA->value], true)),
                 Filter::make('canceladas')
                     ->label('Canceladas')
-                    ->query(fn (Builder $query) => $query->whereIn('status', [AppointmentStatus::CANCELLED])),
+                    ->query(fn (Builder $query) => $query->whereIn('status', [AppointmentStatus::CANCELLED]))
+                    ->visible(fn () => ! in_array(Auth::user()?->role?->value, [UserRole::ENFERMERO->value, UserRole::RECEPCIONISTA->value], true)),
                 Filter::make('todas')
                     ->label('Todas')
                     ->query(fn (Builder $query) => $query)
-                    ->visible(fn () => Auth::user()?->role?->value !== UserRole::MEDICO_GENERAL->value),
+                    ->visible(fn () => ! in_array(Auth::user()?->role?->value, [UserRole::MEDICO_GENERAL->value, UserRole::ENFERMERO->value, UserRole::RECEPCIONISTA->value], true)),
             ]);
     }
 }

@@ -40,6 +40,12 @@ class CreateAppointment extends CreateRecord
             throw new Halt();
         }
 
+        // Sincronizar asignaciones derivadas del consultorio
+        $data['service_id'] = $schedule->service_id;
+        $data['doctor_id'] = $schedule->user_id;
+        $data['shift'] = $shift ?? $schedule->shift->value;
+        $data['date'] = $date ?? (optional($schedule->date)->toDateString() ?? $schedule->date);
+
         return $data;
     }
 

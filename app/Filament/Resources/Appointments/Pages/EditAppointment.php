@@ -20,8 +20,8 @@ class EditAppointment extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            ViewAction::make(),
-            DeleteAction::make(),
+           // ViewAction::make(),
+            //DeleteAction::make(),
         ];
     }
 
@@ -88,6 +88,13 @@ class EditAppointment extends EditRecord
                 ->send();
 
             throw new Halt();
+        }
+        // Sincronizar asignaciones derivadas del consultorio
+        if ($schedule) {
+            $data['service_id'] = $schedule->service_id;
+            $data['doctor_id'] = $schedule->user_id;
+            $data['shift'] = $shift ?? $schedule->shift->value;
+            $data['date'] = $date ?? (optional($schedule->date)->toDateString() ?? $schedule->date);
         }
 
         return $data;

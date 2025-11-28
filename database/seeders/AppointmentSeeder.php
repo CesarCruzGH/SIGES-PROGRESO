@@ -17,18 +17,13 @@ class AppointmentSeeder extends Seeder
             $schedules = ClinicSchedule::query()->where('is_active', true)->get();
         }
         $records = MedicalRecord::query()->pluck('id');
-        $statuses = [
-            AppointmentStatus::PENDING->value,
-            AppointmentStatus::IN_PROGRESS->value,
-            AppointmentStatus::COMPLETED->value,
-            AppointmentStatus::CANCELLED->value,
-        ];
+        // Solo queremos sembrar visitas completadas
 
         if ($schedules->isEmpty() || $records->isEmpty()) {
             return;
         }
-        $count = 50;
-        Appointment::withoutEvents(function () use ($count, $schedules, $records, $statuses) {
+        $count = 10;
+        Appointment::withoutEvents(function () use ($count, $schedules, $records) {
             for ($i = 0; $i < $count; $i++) {
                 $schedule = $schedules->random();
                 $recordId = $records->random();
@@ -40,7 +35,7 @@ class AppointmentSeeder extends Seeder
                     'doctor_id' => $schedule->user_id,
                     'date' => $schedule->date,
                     'shift' => $schedule->shift->value,
-                    'status' => fake()->randomElement($statuses),
+                    'status' => AppointmentStatus::COMPLETED->value,
                 ]);
             }
         });

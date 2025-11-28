@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Appointments\Schemas;
 use App\Enums\AppointmentStatus;
 use App\Enums\VisitType;
 use App\Enums\Shift;
+use App\Enums\UserRole;
 use App\Filament\Resources\Patients\Schemas\PatientForm;
 use App\Models\MedicalRecord;
 use App\Models\Patient;
@@ -18,11 +19,13 @@ use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class AppointmentForm
 {
@@ -151,20 +154,27 @@ class AppointmentForm
                 TextInput::make('ticket_number')
                     ->label('Número de Ticket')
                     ->placeholder('Se generará automáticamente si se deja vacío')
+                    ->disabled()
                     ->helperText('Dejar vacío para generar ticket walk-in automáticamente'),
 
                 DatePicker::make('date')
                     ->label('Fecha de la cita')
                     ->default(now()->toDateString())
                     ->required()
-                    ->live(),
+                    ->live()
+                    ->disabled()
+                    ->helperText('La fecha de la cita corresponde al día actual'),
 
                 Radio::make('shift')
                     ->label('Turno')
-                    ->options(Shift::class)
+                    ->options([
+                        Shift::MATUTINO->value => 'Matutino',
+                        Shift::VESPERTINO->value => 'Vespertino',
+                    ])
                     ->inline()
                     ->required()
-                    ->live(),
+                    ->live()
+                    ->columnSpanFull(),
 
                 Select::make('clinic_schedule_id')
                     ->label('Consultorio activo')
@@ -181,10 +191,17 @@ class AppointmentForm
                     ->preload()
                     ->reactive()
                     ->required()
-                    ->visible(fn ( $get) => filled($get('clinic_schedule_id')) || filled($get('shift')))
+                    ->visible(fn ($get) => filled($get('shift')))
+                    ->columnSpanFull()
+                    ->getOptionLabelFromRecordUsing(function (ClinicSchedule $record) {
+                        $doctor = optional($record->user)->name;
+                        $service = optional($record->service)->name;
+                        return $record->clinic_name . ' — Médico: ' . ($doctor ?? 'N/A') . ' — Servicio: ' . ($service ?? 'N/A');
+                    })
+                    ->hint('Seleccione un consultorio abierto para el turno elegido')
                     ->afterStateHydrated(function ($component, $state, $livewire) {
                         if ($state) {
-                            $schedule = ClinicSchedule::find($state);
+                            $schedule = ClinicSchedule::with(['user', 'service'])->find($state);
                             if ($schedule) {
                                 if (blank($livewire->data['shift'] ?? null)) {
                                     // Usar el valor del enum para evitar desajustes
@@ -195,26 +212,61 @@ class AppointmentForm
                                 }
                                 $livewire->data['service_id'] = $schedule->service_id;
                                 $livewire->data['doctor_id'] = $schedule->user_id;
+                                $livewire->data['consultorio_name'] = $schedule->clinic_name;
+                                $livewire->data['consultorio_doctor'] = optional($schedule->user)->name ?? 'N/A';
+                                $livewire->data['consultorio_servicio'] = optional($schedule->service)->name ?? 'N/A';
+                                $livewire->data['turno_estado'] = $schedule->is_shift_open ? 'Abierto' : 'Cerrado';
                             }
                         }
                     })
                     ->afterStateUpdated(function ($state,  $set) {
                         if ($state) {
-                            $schedule = ClinicSchedule::find($state);
+                            $schedule = ClinicSchedule::with(['user', 'service'])->find($state);
                             if ($schedule) {
                                 // Sincronizar turno con el consultorio seleccionado (usar valor del enum)
                                 $set('shift', $schedule->shift->value);
                                 $set('date', optional($schedule->date)->toDateString() ?? $schedule->date);
                                 $set('service_id', $schedule->service_id);
                                 $set('doctor_id', $schedule->user_id);
+                                $set('consultorio_name', $schedule->clinic_name);
+                                $set('consultorio_doctor', optional($schedule->user)->name ?? 'N/A');
+                                $set('consultorio_servicio', optional($schedule->service)->name ?? 'N/A');
+                                $set('turno_estado', $schedule->is_shift_open ? 'Abierto' : 'Cerrado');
                             }
                         } else {
                             $set('shift', null);
                             $set('date', null);
                             $set('service_id', null);
                             $set('doctor_id', null);
+                            $set('consultorio_name', null);
+                            $set('consultorio_doctor', null);
+                            $set('consultorio_servicio', null);
+                            $set('turno_estado', null);
                         }
                     }),
+
+                Fieldset::make('Detalles del Consultorio')
+                    ->schema([
+                        TextInput::make('consultorio_name')
+                            ->label('Consultorio')
+                            ->disabled()
+                            ->dehydrated(false),
+                        TextInput::make('consultorio_doctor')
+                            ->label('Médico')
+                            ->disabled()
+                            ->dehydrated(false),
+                        TextInput::make('consultorio_servicio')
+                            ->label('Servicio')
+                            ->disabled()
+                            ->dehydrated(false),
+                        TextInput::make('turno_estado')
+                            ->label('Estado del turno')
+                            ->disabled()
+                            ->dehydrated(false),
+                    ])
+                    ->columns(4)
+                    ->columnSpanFull()
+                    ->visible(fn ($get) => filled($get('clinic_schedule_id'))),
 
                 Select::make('service_id')
                     ->label('Servicio')
@@ -222,8 +274,9 @@ class AppointmentForm
                     ->searchable()
                     ->preload()
                     ->required()
-                    //->disabled()
-                    ->helperText('Se llena automáticamente al elegir el consultorio activo.'),
+                    ->disabled(fn ($get) => !($get('manual_edit_enabled') ?? false))
+                    ->helperText('Se llena automáticamente al elegir el consultorio activo.')
+                    ->visible(false),
                 Select::make('visit_type')
                     ->label('Tipo de Visita')
                     ->options(VisitType::class)
@@ -235,20 +288,34 @@ class AppointmentForm
                     ->relationship('doctor', 'name')
                     ->searchable()
                     ->preload()
-                    //->disabled()
-                    ->helperText('Asignado automáticamente según el consultorio/turno.'),
+                    ->disabled(fn ($get) => !($get('manual_edit_enabled') ?? false))
+                    ->helperText('Asignado automáticamente según el consultorio/turno.')
+                    ->visible(false),
+
+                Toggle::make('manual_edit_enabled')
+                    ->label('Edición manual de asignaciones')
+                    ->helperText('Permite editar los campos de médico y servicio')
+                    ->reactive()
+                    ->visible(function () {
+                        $user = Auth::user();
+                        return $user && in_array($user->role, [UserRole::ADMIN, UserRole::DIRECTOR]);
+                    })
+                    ->visible(false),
 
                 Select::make('status')
                     ->label('Estado de la visita')
                     ->options(AppointmentStatus::class)
                     ->default(AppointmentStatus::PENDING)
-                    ->required(),
+                    ->required()
+                    ->disabled()
+                    ->helperText('El estado inicial es "En revisión"'),
                 DateTimePicker::make('created_at')
                     ->label('Fecha de Creación')
                     ->displayFormat('d/m/Y H:i:s')
                     ->disabled()
                     ->dehydrated(false)
-                    ->visible(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\ViewRecord || $livewire instanceof \Filament\Resources\Pages\EditRecord),
+                    ->visible(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\ViewRecord || $livewire instanceof \Filament\Resources\Pages\EditRecord)
+                    ->visible(false),
                 Textarea::make('reason_for_visit')
                     ->label('Motivo de la Visita')
                     ->required()

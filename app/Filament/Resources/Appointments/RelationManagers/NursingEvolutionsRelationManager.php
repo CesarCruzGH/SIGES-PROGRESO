@@ -8,6 +8,7 @@ use Filament\Forms\Form;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use App\Filament\Resources\Appointments\AppointmentResource;
 use Filament\Actions\CreateAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
@@ -34,15 +35,15 @@ class NursingEvolutionsRelationManager extends RelationManager
                 Section::make('Signos vitales')
                     ->columns(3)
                     ->schema([
-                        Forms\Components\TextInput::make('blood_pressure_systolic')->label('PA sistólica')->numeric(),
-                        Forms\Components\TextInput::make('blood_pressure_diastolic')->label('PA diastólica')->numeric(),
-                        Forms\Components\TextInput::make('heart_rate')->label('Pulso (bpm)')->numeric(),
-                        Forms\Components\TextInput::make('respiratory_rate')->label('FR (resp/min)')->numeric(),
-                        Forms\Components\TextInput::make('temperature')->label('Temp (°C)')->numeric(),
-                        Forms\Components\TextInput::make('weight')->label('Peso (kg)')->numeric(),
-                        Forms\Components\TextInput::make('height_cm')->label('Talla (cm)')->numeric()->minValue(50)->maxValue(250)->step('1'),
-                        Forms\Components\TextInput::make('blood_glucose')->label('Glucosa')->numeric(),
-                        Forms\Components\TextInput::make('oxygen_saturation')->label('SpO2 (%)')->numeric(),
+                        Forms\Components\TextInput::make('blood_pressure_systolic')->label('PA sistólica')->numeric()->step('1')->rules(['integer']),
+                        Forms\Components\TextInput::make('blood_pressure_diastolic')->label('PA diastólica')->numeric()->step('1')->rules(['integer']),
+                        Forms\Components\TextInput::make('heart_rate')->label('Pulso (bpm)')->numeric()->step('1')->rules(['integer']),
+                        Forms\Components\TextInput::make('respiratory_rate')->label('FR (resp/min)')->numeric()->step('1')->rules(['integer']),
+                        Forms\Components\TextInput::make('temperature')->label('Temp (°C)')->numeric()->step('0.1'),
+                        Forms\Components\TextInput::make('weight')->label('Peso (kg)')->numeric()->step('0.1'),
+                        Forms\Components\TextInput::make('height_cm')->label('Talla (cm)')->numeric()->minValue(50)->maxValue(250)->step('1')->rules(['integer']),
+                        Forms\Components\TextInput::make('blood_glucose')->label('Glucosa')->numeric()->step('1')->rules(['integer']),
+                        Forms\Components\TextInput::make('oxygen_saturation')->label('SpO2 (%)')->numeric()->step('1')->rules(['integer']),
                         Forms\Components\Textarea::make('observations')->label('Observaciones')->rows(3)->columnSpanFull(),
                     ]),
             ]);
@@ -78,6 +79,10 @@ class NursingEvolutionsRelationManager extends RelationManager
                     ->modalHeading('Registrar Evolución de Enfermería')
                     ->modalSubmitActionLabel('Guardar')
                     ->modalCancelActionLabel('Cancelar')
+                    ->visible(function () {
+                        $role = Auth::user()?->role?->value;
+                        return in_array($role, [\App\Enums\UserRole::ENFERMERO->value, \App\Enums\UserRole::ADMIN->value, \App\Enums\UserRole::DIRECTOR->value], true);
+                    })
                     ->mutateFormDataUsing(function (array $data): array {
                         $owner = $this->getOwnerRecord(); // Appointment
                         $hasVitals = collect([
@@ -86,19 +91,21 @@ class NursingEvolutionsRelationManager extends RelationManager
                         ])->some(fn ($k) => isset($data[$k]) && $data[$k] !== null && $data[$k] !== '');
 
                         if ($hasVitals) {
+                            $int = fn ($v) => is_numeric($v) ? (int) round($v) : null;
+                            $float1 = fn ($v) => is_numeric($v) ? round((float) $v, 1) : null;
                             $reading = SomatometricReading::create([
                                 'medical_record_id' => $owner->medical_record_id,
                                 'appointment_id' => $owner->id,
                                 'user_id' => Auth::id(),
-                                'blood_pressure_systolic' => $data['blood_pressure_systolic'] ?? null,
-                                'blood_pressure_diastolic' => $data['blood_pressure_diastolic'] ?? null,
-                                'heart_rate' => $data['heart_rate'] ?? null,
-                                'respiratory_rate' => $data['respiratory_rate'] ?? null,
-                                'temperature' => $data['temperature'] ?? null,
-                                'weight' => $data['weight'] ?? null,
-                            'height' => isset($data['height_cm']) ? ($data['height_cm'] / 100) : null,
-                                'blood_glucose' => $data['blood_glucose'] ?? null,
-                                'oxygen_saturation' => $data['oxygen_saturation'] ?? null,
+                                'blood_pressure_systolic' => $int($data['blood_pressure_systolic'] ?? null),
+                                'blood_pressure_diastolic' => $int($data['blood_pressure_diastolic'] ?? null),
+                                'heart_rate' => $int($data['heart_rate'] ?? null),
+                                'respiratory_rate' => $int($data['respiratory_rate'] ?? null),
+                                'temperature' => $float1($data['temperature'] ?? null),
+                                'weight' => $float1($data['weight'] ?? null),
+                                'height' => isset($data['height_cm']) ? round(($data['height_cm'] / 100), 3) : null,
+                                'blood_glucose' => $int($data['blood_glucose'] ?? null),
+                                'oxygen_saturation' => $int($data['oxygen_saturation'] ?? null),
                                 'observations' => $data['observations'] ?? null,
                             ]);
                             $data['somatometric_reading_id'] = $reading->id;
@@ -114,6 +121,9 @@ class NursingEvolutionsRelationManager extends RelationManager
                             unset($data[$k]);
                         }
                         return $data;
+                    })
+                    ->after(function () {
+                        $this->redirect(AppointmentResource::getUrl('index'));
                     }),
             ])
             ->actions([
@@ -139,7 +149,7 @@ class NursingEvolutionsRelationManager extends RelationManager
                                     TextEntry::make('somatometricReading.respiratory_rate')->label('FR'),
                                     TextEntry::make('somatometricReading.temperature')->label('Temp (°C)'),
                                     TextEntry::make('somatometricReading.weight')->label('Peso (kg)'),
-                                    TextEntry::make('somatometricReading.height')->label('Talla (m)'),
+                                    TextEntry::make('somatometricReading.height')->label('Talla (cm)'),
                                     TextEntry::make('somatometricReading.blood_glucose')->label('Glucosa'),
                                     TextEntry::make('somatometricReading.oxygen_saturation')->label('SpO2 (%)'),
                                     TextEntry::make('somatometricReading.observations')->label('Observaciones')->columnSpanFull(),

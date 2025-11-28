@@ -59,15 +59,23 @@ class AppointmentObserver
         $assignedClinic = $appointment->wasChanged('clinic_schedule_id') && $appointment->clinic_schedule_id;
         $startedConsultation = $appointment->wasChanged('status') && $appointment->status === AppointmentStatus::IN_PROGRESS;
 
-        if ($assignedClinic || $startedConsultation) {
+        if ($assignedClinic) {
             SendTurnosTicketNotification::dispatch(
-                'call',
+                'assign',
                 [
-                    // --- ADAPTACIÓN A SU JSON ---
                     'ticket'      => $appointment->ticket_number,
                     'consultorio' => $clinicName,
                     'idServicio'  => $appointment->service_id,
-                    'estado'      => 'en_consulta', // Valor fijo o dinámico según acuerdo
+                    'estado'      => 'en_revision',
+                ]
+            )->afterCommit();
+        }
+        if ($startedConsultation) {
+            SendTurnosTicketNotification::dispatch(
+                'confirm',
+                [
+                    'ticket' => $appointment->ticket_number,
+                    'estado' => 'en_consulta',
                 ]
             )->afterCommit();
         }

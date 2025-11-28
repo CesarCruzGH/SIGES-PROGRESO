@@ -37,7 +37,7 @@ class RestrictReceptionAccess
             }
 
             if (! $allowed) {
-                abort(403);
+                return redirect('/dashboard');
             }
         }
 

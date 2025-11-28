@@ -36,6 +36,14 @@ class ViewAppointment extends ViewRecord
 {
     protected static string $resource = AppointmentResource::class;
 
+    public function mount($record): void
+    {
+        parent::mount($record);
+        if (Auth::user()?->role?->value === UserRole::RECEPCIONISTA->value && $this->record->status === AppointmentStatus::COMPLETED) {
+            $this->redirect(AppointmentResource::getUrl('index'));
+        }
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -105,6 +113,7 @@ class ViewAppointment extends ViewRecord
                 ->action(function (array $data): void {
                     $prescription = Prescription::create([
                         'medical_record_id' => $this->record->medical_record_id,
+                        'appointment_id' => $this->record->id,
                         'doctor_id' => Auth::id(),
                         'issue_date' => now()->toDateString(),
                         'diagnosis' => $data['diagnosis'],
@@ -152,20 +161,22 @@ class ViewAppointment extends ViewRecord
                     Section::make('Detalles de la Incapacidad')
                         ->columns(2)
                         ->schema([
-                            \Filament\Forms\Components\DatePicker::make('issue_date')->label('Fecha de Emisión')->default(now())->required(),
+                            \Filament\Forms\Components\DatePicker::make('issue_date')->label('Fecha de Emisión')->default(now())->required()->disabled()->dehydrated(false),
                             \Filament\Forms\Components\DatePicker::make('start_date')->label('Fecha de Inicio')->native(false)->required()->live(),
-                            \Filament\Forms\Components\TextInput::make('duration_in_days')->label('Duración (días)')->numeric()->required()->live(onBlur: true)->afterStateUpdated(function ($get,$set) { $startDate = $get('start_date'); $duration = $get('duration_in_days'); if ($startDate && $duration) { $set('end_date', \Carbon\Carbon::parse($startDate)->addDays($duration - 1)->format('Y-m-d')); } }),
-                            \Filament\Forms\Components\DatePicker::make('end_date')->label('Fecha de Fin')->native(false)->required(),
+                            \Filament\Forms\Components\TextInput::make('duration_in_days')->label('Duración (días)')->numeric()->required()->live(onBlur: true)->afterStateUpdated(function ($get,$set) { $startDate = $get('start_date'); $duration = $get('duration_in_days'); if ($startDate && $duration) { $set('end_date', \Carbon\Carbon::parse($startDate)->addDays($duration)->format('Y-m-d')); } }),
+                            \Filament\Forms\Components\DatePicker::make('end_date')->label('Fecha de Fin')->native(false)->disabled()->dehydrated(false),
                             \Filament\Forms\Components\Textarea::make('reason')->label('Justificación / Diagnóstico Médico')->columnSpanFull()->required(),
                         ]),
                 ])
                 ->action(function (array $data): void {
+                    $endDate = isset($data['end_date']) ? $data['end_date'] : \Carbon\Carbon::parse($data['start_date'])->addDays(($data['duration_in_days'] ?? 0))->format('Y-m-d');
+                    $issueDate = isset($data['issue_date']) ? $data['issue_date'] : now()->toDateString();
                     $leave = MedicalLeave::create([
                         'medical_record_id' => $this->record->medical_record_id,
                         'doctor_id' => Auth::id(),
-                        'issue_date' => $data['issue_date'],
+                        'issue_date' => $issueDate,
                         'start_date' => $data['start_date'],
-                        'end_date' => $data['end_date'],
+                        'end_date' => $endDate,
                         'duration_in_days' => $data['duration_in_days'],
                         'reason' => $data['reason'],
                         'status' => MedicalLeaveStatus::PENDING_APPROVAL->value,
@@ -187,9 +198,9 @@ class ViewAppointment extends ViewRecord
                 ->label('Imprimir receta (Paciente)')
                 ->icon('heroicon-o-printer')
                 ->color('primary')
-                ->visible(fn () => $this->record->status === AppointmentStatus::COMPLETED && Prescription::where('medical_record_id', $this->record->medical_record_id)->exists())
+                ->visible(fn () => $this->record->status === AppointmentStatus::COMPLETED && Prescription::where('appointment_id', $this->record->id)->exists())
                 ->url(fn () => route('prescription.download', [
-                    'prescriptionId' => Prescription::where('medical_record_id', $this->record->medical_record_id)->orderByDesc('id')->value('id'),
+                    'prescriptionId' => Prescription::where('appointment_id', $this->record->id)->orderByDesc('id')->value('id'),
                     'copyType' => 'patient',
                 ])),
 
@@ -197,9 +208,9 @@ class ViewAppointment extends ViewRecord
                 ->label('Imprimir receta (Institución)')
                 ->icon('heroicon-o-printer')
                 ->color('gray')
-                ->visible(fn () => $this->record->status === AppointmentStatus::COMPLETED && Prescription::where('medical_record_id', $this->record->medical_record_id)->exists())
+                ->visible(fn () => $this->record->status === AppointmentStatus::COMPLETED && Prescription::where('appointment_id', $this->record->id)->exists())
                 ->url(fn () => route('prescription.download', [
-                    'prescriptionId' => Prescription::where('medical_record_id', $this->record->medical_record_id)->orderByDesc('id')->value('id'),
+                    'prescriptionId' => Prescription::where('appointment_id', $this->record->id)->orderByDesc('id')->value('id'),
                     'copyType' => 'institution',
                 ])),
 
@@ -207,21 +218,20 @@ class ViewAppointment extends ViewRecord
                 ->label('Registrar Hoja Inicial de Enfermería')
                 ->icon('heroicon-o-clipboard-document-list')
                 ->color('warning')
-                ->visible(fn () => $this->record->visit_type === VisitType::PRIMERA_VEZ->value && $this->record->medicalRecord->nursingAssessmentInitial === null && (Auth::user()?->role?->value !== UserRole::MEDICO_GENERAL->value))
+                ->visible(fn () => $this->record->visit_type === VisitType::PRIMERA_VEZ->value && $this->record->medicalRecord->nursingAssessmentInitial === null && ! in_array(Auth::user()?->role?->value, [UserRole::MEDICO_GENERAL->value, UserRole::RECEPCIONISTA->value], true))
                 ->form([
                     Section::make('Signos vitales')
                         ->columns(3)
                         ->schema([
-                            TextInput::make('blood_pressure_systolic')->label('PA sistólica')->numeric()->minValue(50)->maxValue(250),
-                            TextInput::make('blood_pressure_diastolic')->label('PA diastólica')->numeric()->minValue(30)->maxValue(150),
-                            TextInput::make('heart_rate')->label('FC')->numeric()->minValue(30)->maxValue(220),
-                            TextInput::make('respiratory_rate')->label('FR')->numeric()->minValue(6)->maxValue(40),
+                            TextInput::make('blood_pressure_systolic')->label('PA sistólica')->numeric()->minValue(50)->maxValue(250)->step('1')->rules(['integer']),
+                            TextInput::make('blood_pressure_diastolic')->label('PA diastólica')->numeric()->minValue(30)->maxValue(150)->step('1')->rules(['integer']),
+                            TextInput::make('heart_rate')->label('FC')->numeric()->minValue(30)->maxValue(220)->step('1')->rules(['integer']),
+                            TextInput::make('respiratory_rate')->label('FR')->numeric()->minValue(6)->maxValue(40)->step('1')->rules(['integer']),
                             TextInput::make('temperature')->label('Temp (°C)')->numeric()->minValue(30)->maxValue(45)->step('0.1'),
                             TextInput::make('weight')->label('Peso (kg)')->numeric()->minValue(2)->maxValue(400)->step('0.1'),
-                            TextInput::make('height_cm')->label('Talla (cm)')->numeric()->minValue(50)->maxValue(250)->step('0.1'),
-                            TextInput::make('blood_glucose')->label('Glucosa')->numeric()->minValue(20)->maxValue(999),
-                            TextInput::make('oxygen_saturation')->label('SpO2 (%)')->numeric()->minValue(0)->maxValue(100),
-                            Textarea::make('observations')->label('Observaciones')->rows(3)->columnSpanFull(),
+                            TextInput::make('height_cm')->label('Talla (cm)')->numeric()->minValue(50)->maxValue(250)->step('1')->rules(['integer']),
+                            TextInput::make('blood_glucose')->label('Glucosa')->numeric()->minValue(20)->maxValue(999)->step('1')->rules(['integer']),
+                            TextInput::make('oxygen_saturation')->label('SpO2 (%)')->numeric()->minValue(0)->maxValue(100)->step('1')->rules(['integer']),
                         ]),
                     Textarea::make('notes')->label('Notas de enfermería')->rows(4),
                 ])
@@ -234,19 +244,21 @@ class ViewAppointment extends ViewRecord
 
                     $readingId = null;
                     if ($hasVitals) {
+                        $int = fn ($v) => is_numeric($v) ? (int) round($v) : null;
+                        $float1 = fn ($v) => is_numeric($v) ? round((float) $v, 1) : null;
                         $reading = SomatometricReading::create([
                             'medical_record_id' => $owner->medical_record_id,
                             'appointment_id' => $owner->id,
                             'user_id' => Auth::id(),
-                            'blood_pressure_systolic' => $data['blood_pressure_systolic'] ?? null,
-                            'blood_pressure_diastolic' => $data['blood_pressure_diastolic'] ?? null,
-                            'heart_rate' => $data['heart_rate'] ?? null,
-                            'respiratory_rate' => $data['respiratory_rate'] ?? null,
-                            'temperature' => $data['temperature'] ?? null,
-                            'weight' => $data['weight'] ?? null,
-                            'height' => isset($data['height_cm']) ? ($data['height_cm'] / 100) : null,
-                            'blood_glucose' => $data['blood_glucose'] ?? null,
-                            'oxygen_saturation' => $data['oxygen_saturation'] ?? null,
+                            'blood_pressure_systolic' => $int($data['blood_pressure_systolic'] ?? null),
+                            'blood_pressure_diastolic' => $int($data['blood_pressure_diastolic'] ?? null),
+                            'heart_rate' => $int($data['heart_rate'] ?? null),
+                            'respiratory_rate' => $int($data['respiratory_rate'] ?? null),
+                            'temperature' => $float1($data['temperature'] ?? null),
+                            'weight' => $float1($data['weight'] ?? null),
+                            'height' => isset($data['height_cm']) ? round(($data['height_cm'] / 100), 3) : null,
+                            'blood_glucose' => $int($data['blood_glucose'] ?? null),
+                            'oxygen_saturation' => $int($data['oxygen_saturation'] ?? null),
                             'observations' => $data['observations'] ?? null,
                         ]);
                         $readingId = $reading->id;
@@ -260,7 +272,7 @@ class ViewAppointment extends ViewRecord
                     ]);
 
                     Notification::make()->title('Hoja inicial de enfermería registrada')->success()->send();
-                    $this->redirect(AppointmentResource::getUrl('view', ['record' => $owner]));
+                    $this->redirect(AppointmentResource::getUrl('index'));
                 }),
 
             Action::make('register_medical_initial')
@@ -291,7 +303,7 @@ class ViewAppointment extends ViewRecord
                 ->label('Registrar Evolución de Enfermería')
                 ->icon('heroicon-o-document-plus')
                 ->color('info')
-                ->visible(fn () => $this->record->visit_type === VisitType::SUBSECUENTE->value && (Auth::user()?->role?->value !== UserRole::MEDICO_GENERAL->value))
+                ->visible(fn () => $this->record->visit_type === VisitType::SUBSECUENTE->value && ! in_array(Auth::user()?->role?->value, [UserRole::MEDICO_GENERAL->value, UserRole::RECEPCIONISTA->value], true))
                 ->form([
                     Textarea::make('problem')->label('P'),
                     Textarea::make('subjective')->label('S'),
@@ -301,16 +313,15 @@ class ViewAppointment extends ViewRecord
                     Section::make('Signos vitales')
                         ->columns(3)
                         ->schema([
-                            TextInput::make('blood_pressure_systolic')->label('PA sistólica')->numeric()->minValue(50)->maxValue(250),
-                            TextInput::make('blood_pressure_diastolic')->label('PA diastólica')->numeric()->minValue(30)->maxValue(150),
-                            TextInput::make('heart_rate')->label('FC')->numeric()->minValue(30)->maxValue(220),
-                            TextInput::make('respiratory_rate')->label('FR')->numeric()->minValue(6)->maxValue(40),
+                            TextInput::make('blood_pressure_systolic')->label('PA sistólica')->numeric()->minValue(50)->maxValue(250)->step('1')->rules(['integer']),
+                            TextInput::make('blood_pressure_diastolic')->label('PA diastólica')->numeric()->minValue(30)->maxValue(150)->step('1')->rules(['integer']),
+                            TextInput::make('heart_rate')->label('FC')->numeric()->minValue(30)->maxValue(220)->step('1')->rules(['integer']),
+                            TextInput::make('respiratory_rate')->label('FR')->numeric()->minValue(6)->maxValue(40)->step('1')->rules(['integer']),
                             TextInput::make('temperature')->label('Temp (°C)')->numeric()->minValue(30)->maxValue(45)->step('0.1'),
                             TextInput::make('weight')->label('Peso (kg)')->numeric()->minValue(2)->maxValue(400)->step('0.1'),
-                            TextInput::make('height_cm')->label('Talla (cm)')->numeric()->minValue(50)->maxValue(250)->step('0.1'),
-                            TextInput::make('blood_glucose')->label('Glucosa')->numeric()->minValue(20)->maxValue(999),
-                            TextInput::make('oxygen_saturation')->label('SpO2 (%)')->numeric()->minValue(0)->maxValue(100),
-                            Textarea::make('observations')->label('Observaciones')->rows(3)->columnSpanFull(),
+                            TextInput::make('height_cm')->label('Talla (cm)')->numeric()->minValue(50)->maxValue(250)->step('1')->rules(['integer']),
+                            TextInput::make('blood_glucose')->label('Glucosa')->numeric()->minValue(20)->maxValue(999)->step('1')->rules(['integer']),
+                            TextInput::make('oxygen_saturation')->label('SpO2 (%)')->numeric()->minValue(0)->maxValue(100)->step('1')->rules(['integer']),
                         ]),
                 ])
                 ->action(function (array $data): void {
@@ -322,19 +333,21 @@ class ViewAppointment extends ViewRecord
 
                     $readingId = null;
                     if ($hasVitals) {
+                        $int = fn ($v) => is_numeric($v) ? (int) round($v) : null;
+                        $float1 = fn ($v) => is_numeric($v) ? round((float) $v, 1) : null;
                         $reading = SomatometricReading::create([
                             'medical_record_id' => $owner->medical_record_id,
                             'appointment_id' => $owner->id,
                             'user_id' => Auth::id(),
-                            'blood_pressure_systolic' => $data['blood_pressure_systolic'] ?? null,
-                            'blood_pressure_diastolic' => $data['blood_pressure_diastolic'] ?? null,
-                            'heart_rate' => $data['heart_rate'] ?? null,
-                            'respiratory_rate' => $data['respiratory_rate'] ?? null,
-                            'temperature' => $data['temperature'] ?? null,
-                            'weight' => $data['weight'] ?? null,
-                            'height' => isset($data['height_cm']) ? ($data['height_cm'] / 100) : null,
-                            'blood_glucose' => $data['blood_glucose'] ?? null,
-                            'oxygen_saturation' => $data['oxygen_saturation'] ?? null,
+                            'blood_pressure_systolic' => $int($data['blood_pressure_systolic'] ?? null),
+                            'blood_pressure_diastolic' => $int($data['blood_pressure_diastolic'] ?? null),
+                            'heart_rate' => $int($data['heart_rate'] ?? null),
+                            'respiratory_rate' => $int($data['respiratory_rate'] ?? null),
+                            'temperature' => $float1($data['temperature'] ?? null),
+                            'weight' => $float1($data['weight'] ?? null),
+                            'height' => isset($data['height_cm']) ? round(($data['height_cm'] / 100), 3) : null,
+                            'blood_glucose' => $int($data['blood_glucose'] ?? null),
+                            'oxygen_saturation' => $int($data['oxygen_saturation'] ?? null),
                             'observations' => $data['observations'] ?? null,
                         ]);
                         $readingId = $reading->id;
@@ -353,7 +366,7 @@ class ViewAppointment extends ViewRecord
                     ]);
 
                     Notification::make()->title('Evolución de enfermería registrada')->success()->send();
-                    $this->redirect(AppointmentResource::getUrl('view', ['record' => $owner]));
+                    $this->redirect(AppointmentResource::getUrl('index'));
                 }),
         ];
     }

@@ -3,9 +3,11 @@
 namespace App\Filament\Resources\Appointments\Schemas;
 
 use App\Models\Prescription;
+use App\Enums\AppointmentStatus;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
+use Filament\Infolists\Infolist;
 use Filament\Schemas\Schema;
 
 class AppointmentInfolist
@@ -15,19 +17,37 @@ class AppointmentInfolist
         return $schema->components([
             Section::make('Nota de Consulta')
                 ->columns(2)
-                ->visible(fn ($record) => Prescription::where('medical_record_id', $record->medical_record_id)->exists())
+                ->visible(function ($record) {
+                    $existsForAppointment = Prescription::where('appointment_id', $record->id)->exists();
+                    $fallbackExists = Prescription::where('medical_record_id', $record->medical_record_id)
+                        ->whereNull('appointment_id')
+                        ->exists();
+                    return $existsForAppointment || $fallbackExists;
+                })
                 ->schema([
                     TextEntry::make('diagnosis')
                         ->label('Diagnóstico')
-                        ->state(fn ($record) => Prescription::where('medical_record_id', $record->medical_record_id)->orderByDesc('id')->value('diagnosis'))
+                        ->state(function ($record) {
+                            $pid = Prescription::where('appointment_id', $record->id)->orderByDesc('id')->value('id')
+                                ?? Prescription::where('medical_record_id', $record->medical_record_id)->whereNull('appointment_id')->orderByDesc('id')->value('id');
+                            return $pid ? Prescription::find($pid)->diagnosis : null;
+                        })
                         ->columnSpanFull(),
                     TextEntry::make('treatment_plan')
                         ->label('Plan de Tratamiento')
-                        ->state(fn ($record) => Prescription::where('medical_record_id', $record->medical_record_id)->orderByDesc('id')->value('notes'))
+                        ->state(function ($record) {
+                            $pid = Prescription::where('appointment_id', $record->id)->orderByDesc('id')->value('id')
+                                ?? Prescription::where('medical_record_id', $record->medical_record_id)->whereNull('appointment_id')->orderByDesc('id')->value('id');
+                            return $pid ? Prescription::find($pid)->notes : null;
+                        })
                         ->columnSpanFull(),
                     RepeatableEntry::make('items')
                         ->label('Receta')
-                        ->state(fn ($record) => Prescription::where('medical_record_id', $record->medical_record_id)->orderByDesc('id')->value('items') ?? [])
+                        ->state(function ($record) {
+                            $pid = Prescription::where('appointment_id', $record->id)->orderByDesc('id')->value('id')
+                                ?? Prescription::where('medical_record_id', $record->medical_record_id)->whereNull('appointment_id')->orderByDesc('id')->value('id');
+                            return $pid ? (Prescription::find($pid)->items ?? []) : [];
+                        })
                         ->schema([
                             TextEntry::make('drug')->label('Medicamento'),
                             TextEntry::make('dose')->label('Dosis'),
@@ -41,4 +61,3 @@ class AppointmentInfolist
         ]);
     }
 }
-

@@ -51,6 +51,33 @@ class ClinicSchedule extends Model
                     $model->date = $today;
                 }
             }
+
+            if ($model->isDirty('clinic_name') || $model->isDirty('shift') || $model->isDirty('date')) {
+                $exists = static::query()
+                    ->where('clinic_name', $model->clinic_name)
+                    ->where('shift', $model->shift)
+                    ->whereDate('date', $model->date instanceof \Carbon\Carbon ? $model->date->toDateString() : (string) $model->date)
+                    ->where('id', '!=', $model->id)
+                    ->exists();
+                if ($exists) {
+                    throw new \Illuminate\Validation\ValidationException(
+                        validator([], [])->errors()->add('shift', 'Ya existe una asignación para ese consultorio, turno y fecha')
+                    );
+                }
+            }
+        });
+
+        static::creating(function (ClinicSchedule $model) {
+            $exists = static::query()
+                ->where('clinic_name', $model->clinic_name)
+                ->where('shift', $model->shift)
+                ->whereDate('date', $model->date instanceof \Carbon\Carbon ? $model->date->toDateString() : (string) $model->date)
+                ->exists();
+            if ($exists) {
+                throw new \Illuminate\Validation\ValidationException(
+                    validator([], [])->errors()->add('shift', 'Ya existe una asignación para ese consultorio, turno y fecha')
+                );
+            }
         });
     }
 
