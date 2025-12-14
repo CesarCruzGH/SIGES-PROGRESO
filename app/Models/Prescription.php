@@ -17,6 +17,7 @@ class Prescription extends Model
 
     protected $fillable = [
         'medical_record_id',
+        'appointment_id',
         'doctor_id',
         'folio',
         'issue_date',
@@ -82,5 +83,10 @@ class Prescription extends Model
     public function doctor()
     {
         return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    public function appointment()
+    {
+        return $this->belongsTo(Appointment::class);
     }
 }
