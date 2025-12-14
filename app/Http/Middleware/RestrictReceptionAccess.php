@@ -24,6 +24,7 @@ class RestrictReceptionAccess
                 'dashboard/patients',
                 'dashboard/clinic-schedules',
                 'dashboard/appointments',
+                'dashboard/ayuda',
             ];
 
             $allowed = in_array($path, $allowedExact, true);

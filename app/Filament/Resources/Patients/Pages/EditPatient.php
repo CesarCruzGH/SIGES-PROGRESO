@@ -14,6 +14,7 @@ class EditPatient extends EditRecord
     protected static string $resource = PatientResource::class;
     // Propiedad para guardar el ID de la visita a la que redirigir
     public ?int $redirectToAppointmentId = null;
+    protected array $mrData = [];
 
     protected static ?string $maxWidth = 'full';
 
@@ -37,6 +38,11 @@ class EditPatient extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
+        $this->mrData = [
+            'patient_type' => $data['patient_type'] ?? null,
+            'employee_status' => $data['employee_status'] ?? null,
+        ];
+        unset($data['patient_type'], $data['employee_status']);
         // 1. Verificamos el estado actual del paciente que estamos editando.
         //    La variable `$this->record` contiene el modelo del paciente.
         if ($this->record->status === 'pending_review') {
@@ -52,6 +58,21 @@ class EditPatient extends EditRecord
         }
 
         return $data;
+    }
+
+    protected function afterSave(): void
+    {
+        $mr = \App\Models\MedicalRecord::where('patient_id', $this->record->id)->first();
+        if (! $mr) {
+            $mr = \App\Models\MedicalRecord::firstOrCreate(['patient_id' => $this->record->id], []);
+        }
+        $payload = array_filter([
+            'patient_type' => $this->mrData['patient_type'] ?? null,
+            'employee_status' => $this->mrData['employee_status'] ?? null,
+        ], fn ($v) => ! is_null($v));
+        if (! empty($payload)) {
+            $mr->update($payload);
+        }
     }
 
         /**

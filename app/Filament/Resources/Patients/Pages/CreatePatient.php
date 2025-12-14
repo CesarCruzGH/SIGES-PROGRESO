@@ -11,6 +11,17 @@ class CreatePatient extends CreateRecord
 {
     protected static string $resource = PatientResource::class;
     protected static ?string $maxWidth = 'full';
+    protected array $mrData = [];
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $this->mrData = [
+            'patient_type' => $data['patient_type'] ?? null,
+            'employee_status' => $data['employee_status'] ?? null,
+        ];
+        unset($data['patient_type'], $data['employee_status']);
+        return $data;
+    }
 
     protected function handleRecordCreation(array $data): Patient
     {
@@ -40,5 +51,21 @@ class CreatePatient extends CreateRecord
     protected function getRedirectUrl(): string
     {
         return MedicalRecordResource::getUrl('index');
+    }
+
+    protected function afterCreate(): void
+    {
+        $record = $this->record;
+        $mr = \App\Models\MedicalRecord::where('patient_id', $record->id)->first();
+        if (! $mr) {
+            $mr = \App\Models\MedicalRecord::firstOrCreate(['patient_id' => $record->id], []);
+        }
+        $payload = array_filter([
+            'patient_type' => $this->mrData['patient_type'] ?? null,
+            'employee_status' => $this->mrData['employee_status'] ?? null,
+        ], fn ($v) => ! is_null($v));
+        if (! empty($payload)) {
+            $mr->update($payload);
+        }
     }
 }

@@ -9,6 +9,7 @@ use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Actions\Action;
 use Filament\Schemas\Components\Tabs\Tab;
+use App\Filament\Pages\HelpCenter; // Importar la página de ayuda
 
 class ListPatients extends ListRecords
 {
@@ -24,7 +25,15 @@ class ListPatients extends ListRecords
                 ->color('gray')
                 ->url(asset('storage/templates/consentimiento_plantilla.pdf'))
                 ->openUrlInNewTab(),
-           
+           // Botón de Ayuda Contextual
+            Action::make('help')
+                ->label('Ayuda')
+                ->icon('heroicon-o-question-mark-circle')
+                ->color('gray')
+                ->url(HelpCenter::getUrl() . '#pacientes') // Redirige a la sección específica
+                ->openUrlInNewTab(), // Opcional: abrir en nueva pestaña para no perder el trabajo
+
+            //CreateAction::make(),
         ];
     }
 

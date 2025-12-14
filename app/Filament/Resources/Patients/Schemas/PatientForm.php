@@ -360,7 +360,6 @@ class PatientForm
                                     ->columnSpanFull(),
 
                                 Section::make('Clasificación del Expediente')
-                                    ->relationship('medicalRecord')
                                     ->schema([
                                         Select::make('patient_type')
                                             ->label('Tipo de Paciente')
