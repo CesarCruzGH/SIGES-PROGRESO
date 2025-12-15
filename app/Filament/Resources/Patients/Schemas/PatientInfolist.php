@@ -19,10 +19,12 @@ class PatientInfolist
                             ->label('Número de Expediente'),
                         TextEntry::make('medicalRecord.patient_type')
                             ->label('Tipo de Paciente')
-                            ->badge(),
+                            ->badge()
+                            ->formatStateUsing(fn ($state) => is_string($state) ? $state : (is_object($state) && property_exists($state, 'value') ? $state->value : (string) $state)),
                         TextEntry::make('medicalRecord.employee_status')
                             ->label('Estatus de Empleado')
-                            ->badge(),
+                            ->badge()
+                            ->formatStateUsing(fn ($state) => is_string($state) ? $state : (is_object($state) && property_exists($state, 'value') ? $state->value : (string) $state)),
                     ]),
                 Section::make('Datos Personales del Paciente')
                     ->columns(2)

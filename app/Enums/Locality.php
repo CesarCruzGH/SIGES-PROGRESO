@@ -13,12 +13,11 @@ enum Locality: string
     case SAN_IGNACIO = 'San Ignacio';
     case XTUL = 'Xtul';
 
-    // Nuestro método ayudante para los formularios de Filament
     public static function getOptions(): array
     {
         $options = [];
         foreach (self::cases() as $case) {
-            $options[$case->value] = $case->value; // Usamos el mismo valor para la clave y la etiqueta
+            $options[$case->value] = $case->value;
         }
         return $options;
     }

@@ -5,11 +5,13 @@ namespace App\Filament\Resources\Patients\Schemas;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Schemas\Schema; 
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Schemas\Components\Section;
@@ -20,6 +22,8 @@ use App\Enums\Locality;
 use Carbon\Carbon;
 use App\Enums\PatientType;
 use App\Enums\EmployeeStatus;
+use App\Enums\ChronicDisease;
+use App\Support\ColoniaCatalog;
 
 use Filament\Forms\Components\FileUpload; // <-- Importar FileUpload
 use Illuminate\Database\Eloquent\Model; // <-- Importar Model
@@ -136,10 +140,18 @@ class PatientForm
                             ->schema([
                                 Select::make('locality')
                                     ->label('Localidad')
-                                    ->options(Locality::getOptions())
+                                    ->options(fn () => class_exists(\App\Enums\Locality::class) ? \App\Enums\Locality::getOptions() : [])
                                     ->searchable()
                                     ->searchPrompt('Empieza a escribir para buscar...')
-                                    ->required(),
+                                    ->required()
+                                    ->live()
+                                    ->afterStateUpdated(fn ( $set) => $set('colonia', null)),
+
+                                Select::make('colonia')
+                                    ->label('Colonia')
+                                    ->options(fn ( $get) => ColoniaCatalog::getColonias($get('locality')))
+                                    ->disabled(fn ( $get) => ! $get('locality'))
+                                    ->searchable(),
 
                                 TextInput::make('contact_phone')
                                     ->label('Teléfono de Contacto')
@@ -167,18 +179,32 @@ class PatientForm
                                     ->columnSpanFull(),
 
                                 Section::make('Clasificación del Expediente')
-                                    //->relationship('medicalRecord')
                                     ->schema([
-                                        Select::make('patient_type')
+                                        Select::make('medicalRecord.patient_type')
                                             ->label('Tipo de Paciente')
                                             ->options(PatientType::getOptions())
                                             ->required()
                                             ->live(),
 
-                                        Select::make('employee_status')
+                                        Select::make('medicalRecord.employee_status')
                                             ->label('Estatus de Empleado')
                                             ->options(EmployeeStatus::getOptions())
-                                            ->visible(fn ($get) => $get('patient_type') === PatientType::EMPLOYEE->value),
+                                            ->visible(fn ($get) => $get('medicalRecord.patient_type') === PatientType::EMPLOYEE->value),
+                                    ])
+                                    ->columns(2),
+                                
+                                Section::make('Antecedentes / Comorbilidades')
+                                    ->schema([
+                                        CheckboxList::make('chronic_diseases')
+                                            ->label('Enfermedades Crónicas / Comorbilidades')
+                                            ->options(function () {
+                                                $options = [];
+                                                foreach (\App\Enums\ChronicDisease::cases() as $case) {
+                                                    $options[$case->value] = $case->getLabel();
+                                                }
+                                                return $options;
+                                            })
+                                            ->columns(2),
                                     ])
                                     ->columns(2),
                                 // Sección para asignar tutor (solo visible para pacientes pediátricos)
@@ -204,7 +230,7 @@ class PatientForm
                                             // Configuración simple y directa para asegurar que se guarde correctamente
                                             ->dehydrated(true)
                                     ])
-                                    ->visible(fn ($get) => $get('medicalRecord.patient_type') === PatientType::PEDIATRIC->value || $get('patient_type') === PatientType::PEDIATRIC->value)
+                                    ->visible(fn ($get) => $get('medicalRecord.patient_type') === PatientType::PEDIATRIC->value)
                                     ->columns(2),   
                                              
                                 AdvancedFileUpload::make('medicalRecord.consent_form_path')
@@ -331,10 +357,18 @@ class PatientForm
                             ->schema([
                                 Select::make('locality')
                                     ->label('Localidad')
-                                    ->options(Locality::getOptions())
+                                    ->options(fn () => class_exists(\App\Enums\Locality::class) ? \App\Enums\Locality::getOptions() : [])
                                     ->searchable()
                                     ->searchPrompt('Empieza a escribir para buscar...')
-                                    ->required(),
+                                    ->required()
+                                    ->live()
+                                    ->afterStateUpdated(fn ( $set) => $set('colonia', null)),
+
+                                Select::make('colonia')
+                                    ->label('Colonia')
+                                    ->options(fn ( $get) => ColoniaCatalog::getColonias($get('locality')))
+                                    ->disabled(fn ( $get) => ! $get('locality'))
+                                    ->searchable(),
 
                                 TextInput::make('contact_phone')
                                     ->label('Teléfono de Contacto')
@@ -361,16 +395,31 @@ class PatientForm
 
                                 Section::make('Clasificación del Expediente')
                                     ->schema([
-                                        Select::make('patient_type')
+                                        Select::make('medicalRecord.patient_type')
                                             ->label('Tipo de Paciente')
                                             ->options(PatientType::getOptions())
                                             ->required()
                                             ->live(),
 
-                                        Select::make('employee_status')
+                                        Select::make('medicalRecord.employee_status')
                                             ->label('Estatus de Empleado')
                                             ->options(EmployeeStatus::getOptions())
-                                            ->visible(fn ($get) => $get('patient_type') === PatientType::EMPLOYEE->value),
+                                            ->visible(fn ($get) => $get('medicalRecord.patient_type') === PatientType::EMPLOYEE->value),
+                                    ])
+                                    ->columns(2),
+                                
+                                Section::make('Antecedentes / Comorbilidades')
+                                    ->schema([
+                                        CheckboxList::make('chronic_diseases')
+                                            ->label('Enfermedades Crónicas / Comorbilidades')
+                                            ->options(function () {
+                                                $options = [];
+                                                foreach (\App\Enums\ChronicDisease::cases() as $case) {
+                                                    $options[$case->value] = $case->getLabel();
+                                                }
+                                                return $options;
+                                            })
+                                            ->columns(2),
                                     ])
                                     ->columns(2),
                                 
@@ -389,7 +438,7 @@ class PatientForm
                                                 Textarea::make('address')->label('Dirección')->columnSpanFull(),
                                             ])
                                     ])
-                                    ->visible(fn ($get) => $get('medicalRecord.patient_type') === PatientType::PEDIATRIC->value || $get('patient_type') === PatientType::PEDIATRIC->value)
+                                    ->visible(fn ($get) => $get('medicalRecord.patient_type') === PatientType::PEDIATRIC->value)
                                     ->columns(2),
 
                                 AdvancedFileUpload::make('medicalRecord.consent_form_path')

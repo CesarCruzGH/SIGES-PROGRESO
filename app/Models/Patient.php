@@ -25,11 +25,13 @@ class Patient extends Model
         'sex',
         'curp',
         'locality',
+        'colonia',
         'contact_phone',
         'address',
         'has_disability',
         'disability_details',
         'status',
+        'chronic_diseases',
     ];
 
     protected $casts = [
@@ -42,6 +44,7 @@ class Patient extends Model
         'contact_phone' => 'encrypted',
         'address' => 'encrypted',
         'disability_details' => 'encrypted',
+        'chronic_diseases' => 'array',
 
     ];
     // Este accesor ahora es la única fuente de verdad para la edad. ¡Perfecto!

@@ -39,10 +39,10 @@ class EditPatient extends EditRecord
     protected function mutateFormDataBeforeSave(array $data): array
     {
         $this->mrData = [
-            'patient_type' => $data['patient_type'] ?? null,
-            'employee_status' => $data['employee_status'] ?? null,
+            'patient_type' => data_get($data, 'medicalRecord.patient_type') ?? ($data['patient_type'] ?? null),
+            'employee_status' => data_get($data, 'medicalRecord.employee_status') ?? ($data['employee_status'] ?? null),
         ];
-        unset($data['patient_type'], $data['employee_status']);
+        unset($data['patient_type'], $data['employee_status'], $data['medicalRecord']['patient_type'], $data['medicalRecord']['employee_status']);
         // 1. Verificamos el estado actual del paciente que estamos editando.
         //    La variable `$this->record` contiene el modelo del paciente.
         if ($this->record->status === 'pending_review') {
@@ -57,6 +57,16 @@ class EditPatient extends EditRecord
                 ->send();
         }
 
+        return $data;
+    }
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $mr = \App\Models\MedicalRecord::where('patient_id', $this->record->id)->first();
+        if ($mr) {
+            $data['medicalRecord']['patient_type'] = $mr->patient_type?->value ?? null;
+            $data['medicalRecord']['employee_status'] = $mr->employee_status?->value ?? null;
+        }
         return $data;
     }
 

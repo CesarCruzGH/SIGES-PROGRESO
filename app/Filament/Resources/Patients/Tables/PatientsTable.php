@@ -11,9 +11,15 @@ use Filament\Actions\ViewAction;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TagsColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Actions\CreateAction;
+use Illuminate\Database\Eloquent\Builder;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Filament\Exports\PatientExporter;
+use App\Support\ColoniaCatalog;
+use App\Enums\ChronicDisease;
 
 class PatientsTable
 {
@@ -92,6 +98,23 @@ class PatientsTable
                     ->color('gray')
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                TextColumn::make('colonia')
+                    ->label('Colonia')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TagsColumn::make('chronic_diseases')
+                    ->label('Enfermedades')
+                    ->getStateUsing(function ($record) {
+                        $values = (array) ($record->chronic_diseases ?? []);
+                        return array_map(function ($v) {
+                            $enum = ChronicDisease::tryFrom((string) $v);
+                            return $enum ? $enum->getLabel() : (string) $v;
+                        }, $values);
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('contact_phone')
                     ->label('Teléfono')
                     ->formatStateUsing(fn ($state) => $state ? '+52 ' . $state : '—')
@@ -124,7 +147,21 @@ class PatientsTable
             ->filters([
                 SelectFilter::make('locality')
                     ->label('Localidad')
-                    ->options(Locality::getOptions()),
+                    ->options(fn () => class_exists(\App\Enums\Locality::class) ? \App\Enums\Locality::getOptions() : []),
+
+                SelectFilter::make('colonia')
+                    ->label('Colonia')
+                    ->options(function () {
+                        $options = [];
+                        $localities = class_exists(\App\Enums\Locality::class) ? \App\Enums\Locality::cases() : [];
+                        foreach ($localities as $loc) {
+                            foreach (ColoniaCatalog::getColonias($loc->value) as $col) {
+                                $options[$col] = $col;
+                            }
+                        }
+                        ksort($options);
+                        return $options;
+                    }),
 
                 TernaryFilter::make('has_disability')
                     ->label('Discapacidad')
@@ -137,6 +174,26 @@ class PatientsTable
                         'pending_review' => 'Pendiente de revisión',
                         'inactive' => 'Inactivo',
                     ]),
+
+                SelectFilter::make('chronic_diseases')
+                    ->label('Enfermedades')
+                    ->options(function () {
+                        $opts = [];
+                        foreach (ChronicDisease::cases() as $case) {
+                            $opts[$case->value] = $case->getLabel();
+                        }
+                        return $opts;
+                    })
+                    ->multiple()
+                    ->query(function (Builder $query, array $data) {
+                        $values = array_values($data['values'] ?? []);
+                        if (! empty($values)) {
+                            foreach ($values as $v) {
+                                $query->whereJsonContains('chronic_diseases', $v);
+                            }
+                        }
+                        return $query;
+                    }),
             ])
             ->recordActions([
                 ViewAction::make()
@@ -157,6 +214,13 @@ class PatientsTable
                     ->label('Crear Nuevo Paciente')
                     ->icon('heroicon-s-plus')
                     ->tooltip('Crear una nueva ficha de paciente'),
+                \Filament\Actions\Action::make('export_patients')
+                    ->label('Exportar')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
+                    ->action(function () {
+                        return Excel::download(new PatientExporter(), 'pacientes.xlsx');
+                    }),
             ])
             ;
     }

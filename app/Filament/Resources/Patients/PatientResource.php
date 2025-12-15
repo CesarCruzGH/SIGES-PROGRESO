@@ -49,7 +49,7 @@ class PatientResource extends Resource
 
     public static function infolist(Schema $schema): Schema
     {
-        return $schema->configure(fn (Schema $schema): Schema => static::infolist($schema));
+        return PatientInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
