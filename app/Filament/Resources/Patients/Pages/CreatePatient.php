@@ -63,6 +63,7 @@ class CreatePatient extends CreateRecord
         $payload = array_filter([
             'patient_type' => $this->mrData['patient_type'] ?? null,
             'employee_status' => $this->mrData['employee_status'] ?? null,
+            'consent_form_path' => $this->mrData['consent_form_path'] ?? null,
         ], fn ($v) => ! is_null($v));
         if (! empty($payload)) {
             $mr->update($payload);

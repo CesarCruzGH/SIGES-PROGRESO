@@ -106,7 +106,9 @@ class QuickActionsWidget extends Widget implements HasForms
                             }
                         }
                         $medicalRecord->update([
-                            'patient_type' => $data['patient_type'],
+                            'patient_type' => $data['medicalRecord']['patient_type'] ?? $data['patient_type'] ?? null,
+                            'employee_status' => $data['medicalRecord']['employee_status'] ?? $data['employee_status'] ?? null,
+                            'consent_form_path' => $data['medicalRecord']['consent_form_path'] ?? $data['consent_form_path'] ?? null,
                         ]);
                         return $medicalRecord->id;
                     }),
